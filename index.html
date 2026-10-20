@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JK Study Hub | Supplier &amp; Operations Panel</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="seller.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- =========================================================
+       1. OWNER-ONLY ACCESS LOCK SCREEN
+       ========================================================= -->
+  <div id="sellerAuthLockScreen">
+    <div class="seller-lock-card">
+      <div class="seller-lock-icon">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h2 class="seller-lock-title">JK Study Hub Panel</h2>
+      <p class="seller-lock-sub">Store fulfillment, dispatch &amp; order management strictly for authorized JK Study Hub administrators.</p>
+
+      <div id="sellerAuthErrorMessage" style="display:none; background:#fee2e2; color:#b91c1c; font-size:12.5px; font-weight:700; padding:10px 14px; border-radius:8px; margin-bottom:14px; text-align:left;">
+        <i class="fa-solid fa-circle-exclamation"></i> Access Denied: Unauthorized account.
+      </div>
+
+      <!-- Device Workspace Selector (Laptop vs Mobile) -->
+      <div class="seller-device-select-box" style="margin-bottom: 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+          <span><i class="fa-solid fa-sliders"></i> Choose Screen Layout</span>
+          <span id="detectedScreenHint" style="font-size: 10.5px; color: #2563eb; font-weight: 700;"></span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button type="button" id="btnModeDesktop" onclick="setSellerDeviceMode('desktop')" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 8px; border-radius: 9px; border: 2px solid #2563eb; background: #eff6ff; cursor: pointer; transition: all 0.2s; text-align: center;">
+            <i class="fa-solid fa-laptop" style="font-size: 22px; color: #2563eb; margin-bottom: 4px;"></i>
+            <span style="font-size: 12.5px; font-weight: 800; color: #0f172a;">MacBook / Laptop</span>
+            <small style="font-size: 10.5px; color: #64748b;">Full Desktop UI</small>
+          </button>
+          <button type="button" id="btnModeMobile" onclick="setSellerDeviceMode('mobile')" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 8px; border-radius: 9px; border: 2px solid #cbd5e1; background: #fff; cursor: pointer; transition: all 0.2s; text-align: center;">
+            <i class="fa-solid fa-mobile-screen-button" style="font-size: 22px; color: #10b981; margin-bottom: 4px;"></i>
+            <span style="font-size: 12.5px; font-weight: 800; color: #0f172a;">Mobile Phone</span>
+            <small style="font-size: 10.5px; color: #64748b;">Touch &amp; Card UI</small>
+          </button>
+        </div>
+      </div>
+
+      <div id="sellerManualLoginWrap">
+        <!-- 1-Click Google Sign In for Store Owner -->
+        <button type="button" onclick="handleSellerGoogleAuth()" style="width: 100%; background: #ffffff; border: 2px solid #cbd5e1; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14.5px; color: #1e293b; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: all 0.2s; margin-bottom: 14px;">
+          <svg style="width: 20px; height: 20px;" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          <span>1-Click Sign in with Google</span>
+        </button>
+
+        <div style="text-align: center; margin: 14px 0; display: flex; align-items: center; gap: 10px;">
+          <span style="flex: 1; height: 1px; background: #e2e8f0;"></span>
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">OR VIA SECRET PASSCODE</span>
+          <span style="flex: 1; height: 1px; background: #e2e8f0;"></span>
+        </div>
+
+        <input type="text" id="sellerLoginIdInput" class="seller-lock-input" placeholder="Owner Email or Mobile Number" autocomplete="username">
+        <input type="password" id="sellerPinInput" class="seller-lock-input" placeholder="Secret Owner PIN / Passcode" autocomplete="current-password">
+        <button type="button" class="seller-lock-btn" onclick="verifySellerOwnerCredentials()">
+          <i class="fa-solid fa-lock-open"></i> Unlock JK Study Hub Panel
+        </button>
+      </div>
+
+      <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+        <a href="https://jkstudyhub.online/store.html" style="color: #64748b; text-decoration: none; font-weight: 600;">
+          <i class="fa-solid fa-arrow-left"></i> Return to Student Store
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       2. JK STUDY HUB SUPPLIER PANEL APP SHELL
+       ========================================================= -->
+  <div class="supplier-app-shell" id="sellerAppShell" style="display: none;">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="supplier-sidebar" id="sellerSidebar">
+      <!-- Mobile Close Drawer Button -->
+      <div class="sidebar-mobile-close-bar" id="sidebarMobileCloseBar">
+        <span style="font-size: 13px; font-weight: 800; color: #1e293b;">Navigation Menu</span>
+        <button type="button" class="sidebar-mobile-close-btn" onclick="toggleSellerMobileSidebar(false)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Store Header with Dropdown -->
+      <div class="sidebar-store-picker" onclick="alert('Store: JK Study Hub Official Store\nHub: Main Logistics Hub, Pattan 193121\nCloud sync status is shown when catalog, price, and video changes are saved.')">
+        <div class="store-picker-left">
+          <div class="store-avatar-badge">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="store-title-text">JK Study Hub</div>
+            <div class="store-sub-text">Pattan Hub (193121)</div>
+          </div>
+        </div>
+        <i class="fa-solid fa-store" style="font-size: 13px; color: #2563eb;"></i>
+      </div>
+
+      <!-- Quick Notices & Support Bar -->
+      <div class="sidebar-quick-bar">
+        <div class="quick-bar-item" onclick="switchSellerView('orders')">
+          <i class="fa-regular fa-bell"></i> Notices
+        </div>
+        <a href="https://wa.me/919622605714" target="_blank" rel="noopener" class="quick-bar-item">
+          <i class="fa-regular fa-comments"></i> Support
+        </a>
+      </div>
+
+      <!-- Navigation Group: Home -->
+      <div class="sidebar-nav-group">
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-home" onclick="switchSellerView('home')">
+          <i class="fa-solid fa-house"></i>
+          <span>Home</span>
+        </a>
+      </div>
+
+      <!-- Navigation Group: Manage Business -->
+      <div class="sidebar-nav-group">
+        <div class="nav-group-title">Manage Business</div>
+        
+        <a href="javascript:void(0)" class="sidebar-nav-link active" id="nav-link-orders" onclick="switchSellerView('orders')">
+          <i class="fa-solid fa-box-archive"></i>
+          <span>Orders</span>
+          <span class="nav-pill-badge pink">LIVE</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-returns" onclick="switchSellerView('returns')">
+          <i class="fa-solid fa-arrow-rotate-left"></i>
+          <span>Returns</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-pricing" onclick="switchSellerView('pricing')">
+          <i class="fa-solid fa-tag"></i>
+          <span>Pricing</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-inventory" onclick="switchSellerView('inventory')">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <span>Stock &amp; Inventory</span>
+          <span class="nav-pill-badge blue" id="outOfStockBadgeCount">0 Out</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-delivery" onclick="switchSellerView('delivery')">
+          <i class="fa-solid fa-truck-ramp-box"></i>
+          <span>Delivery &amp; COD Rates</span>
+          <span class="nav-pill-badge green" id="freeDistrictsBadgeCount">FREE</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-catalog" onclick="switchSellerView('catalog')">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Catalog Uploads</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-reels" onclick="switchSellerView('reels')">
+          <i class="fa-solid fa-circle-play" style="color: #ef4444;"></i>
+          <span>Video Ads</span>
+          <span class="nav-pill-badge" style="background:#fee2e2; color:#ef4444; font-weight:800;">LIVE</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-payments" onclick="switchSellerView('payments')">
+          <i class="fa-solid fa-wallet"></i>
+          <span>Payments</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-warehouse" onclick="switchSellerView('warehouse')">
+          <i class="fa-solid fa-warehouse"></i>
+          <span>Warehouse</span>
+        </a>
+
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-leads" onclick="switchSellerView('leads')">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>School Pre-Orders &amp; Leads</span>
+          <span class="nav-pill-badge blue" id="preorderLeadsBadge">0</span>
+        </a>
+
+        <a href="print-cards.html" target="_blank" class="sidebar-nav-link" id="nav-link-cards" style="color: #b45309; font-weight: 700;">
+          <i class="fa-solid fa-print"></i>
+          <span>Print Cards &amp; VIP Passes</span>
+          <span class="nav-pill-badge" style="background: #fef3c7; color: #b45309;">A4 PDF</span>
+        </a>
+      </div>
+
+      <!-- Navigation Group: Performance -->
+      <div class="sidebar-nav-group">
+        <div class="nav-group-title">Performance</div>
+        <a href="javascript:void(0)" class="sidebar-nav-link" id="nav-link-dashboard" onclick="switchSellerView('dashboard')">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Business Dashboard</span>
+        </a>
+      </div>
+
+      <!-- Bottom Credit -->
+      <div class="sidebar-bottom-credit">
+        <i class="fa-solid fa-bolt" style="color: #2563eb;"></i>
+        <span><strong>JK Study Hub</strong> Operations</span>
+      </div>
+    </aside>
+
+    <!-- MAIN VIEWPORT -->
+    <main class="supplier-main-viewport">
+      <!-- Top Sticky Bar -->
+      <header class="supplier-top-navbar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <button type="button" class="btn-hub-secondary" id="sidebarToggleBtn" onclick="toggleSellerMobileSidebar()" style="display: none; padding: 6px 10px;">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <h1 class="top-navbar-title" id="sellerPageTitle">Orders</h1>
+        </div>
+
+        <div class="top-navbar-actions">
+          <button type="button" id="btnQuickModeSwitch" class="btn-hub-secondary" onclick="toggleSellerDeviceMode()" title="Switch between Desktop and Mobile layout" style="font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; border-color: #93c5fd; background: #eff6ff; color: #1d4ed8;">
+            <i class="fa-solid fa-mobile-screen-button"></i> <span>Mobile View</span>
+          </button>
+
+          <div class="sync-status-pill" id="sellerSyncPill">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Google Sheets Synced</span>
+          </div>
+
+          <a href="print-cards.html" target="_blank" class="btn-hub-secondary" style="font-weight: 700; color: #b45309; border-color: #fde68a; background: #fffbeb; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-print"></i> Print Cards &amp; VIP Passes
+          </a>
+
+          <a href="poster.html" target="_blank" class="btn-hub-secondary" style="font-weight: 700; color: #0f766e; border-color: #99f6e4; background: #f0fdfa; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-rectangle-ad"></i> Flex Posters &amp; Banners
+          </a>
+
+          <button type="button" class="btn-hub-secondary" onclick="openBarcodeScannerModal()" title="Open In-App Camera Barcode & QR Scanner" style="font-weight: 700; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;">
+            <i class="fa-solid fa-camera"></i> Scan Barcode
+          </button>
+
+          <button type="button" class="btn-hub-secondary" onclick="exportOrdersToCSV()">
+            <i class="fa-solid fa-file-arrow-down"></i> Download Orders Data ⌵
+          </button>
+
+          <button type="button" class="btn-hub-primary" onclick="syncSellerWithGoogleSheets(true)">
+            <i class="fa-solid fa-rotate"></i> Sync Live
+          </button>
+
+          <button type="button" class="btn-hub-secondary" onclick="confirmResetAllToZero()" title="Reset All Orders & Analytics to 0 (Fresh Slate)" style="color: #dc2626; border-color: #fecaca; background: #fef2f2; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-rotate-left"></i> Reset to 0 (Fresh)
+          </button>
+
+          <button type="button" class="btn-hub-secondary" onclick="handleSellerSignOut()" title="Sign out of Supplier Panel" style="color: #dc2626;">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT INJECTOR -->
+      <div class="supplier-page-body">
+
+        <!-- =======================================================
+             VIEW 1: ORDERS FULFILLMENT
+             ======================================================= -->
+        <section class="seller-view-pane active" id="view-orders">
+          
+          <!-- Notice Card 1: Retry Download -->
+          <div class="hub-notice-card">
+            <div class="notice-left">
+              <img src="images/ad-3d-scooter.png" class="notice-package-icon" alt="Packaging">
+              <div>
+                <div class="notice-title">📦 JK Study Hub Fast Dispatch Engine Active</div>
+                <div class="notice-desc">All customer orders received are synchronized with Google Sheets and ready for dispatch.</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <a href="print-cards.html" target="_blank" class="notice-action-btn" style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-print"></i> Print Cards &amp; VIP Passes
+              </a>
+              <button type="button" class="notice-action-btn" onclick="openBulkLabelModal()">Download Labels</button>
+            </div>
+          </div>
+
+          <!-- Notice Card 2: Packaging Policy -->
+          <div class="hub-policy-strip">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <i class="fa-solid fa-box-open" style="font-size: 16px;"></i>
+              <span><strong>Packaging Policy:</strong> Sealed Barcoded Packaging is standard for all student book deliveries across Kashmir.</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="notice-action-btn" style="padding: 4px 12px; font-size: 12px;" onclick="openBarcodeScannerModal()"><i class="fa-solid fa-camera"></i> Scan Barcode Packets</button>
+            </div>
+          </div>
+
+          <!-- Fulfillment Tabs Strip -->
+          <div class="hub-tabs-strip">
+            <button type="button" class="hub-tab-btn" data-status="on_hold" onclick="setFulfillmentTab('on_hold', this)">
+              On Hold (<span id="countTabOnHold">0</span>)
+            </button>
+            <button type="button" class="hub-tab-btn active" data-status="pending" onclick="setFulfillmentTab('pending', this)">
+              Pending (<span id="countTabPending">0</span>)
+            </button>
+            <button type="button" class="hub-tab-btn" data-status="ready_to_ship" onclick="setFulfillmentTab('ready_to_ship', this)">
+              Ready to Ship (<span id="countTabReady">0</span>)
+            </button>
+            <button type="button" class="hub-tab-btn" data-status="shipped" onclick="setFulfillmentTab('shipped', this)">
+              Shipped (<span id="countTabShipped">0</span>)
+            </button>
+            <button type="button" class="hub-tab-btn" data-status="cancelled" onclick="setFulfillmentTab('cancelled', this)">
+              Cancelled (<span id="countTabCancelled">0</span>)
+            </button>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="hub-filter-bar">
+            <div class="filter-left-group">
+              <span class="filter-label">Filter by :</span>
+              <select class="filter-select" id="filterSLA" onchange="renderSellerOrdersTable()">
+                <option value="all">SLA Status (All)</option>
+                <option value="urgent">Urgent (&lt; 24 hrs)</option>
+                <option value="normal">Normal</option>
+              </select>
+
+              <select class="filter-select" id="filterPayment" onchange="renderSellerOrdersTable()">
+                <option value="all">Payment Mode (All)</option>
+                <option value="cod">Cash on Delivery (COD)</option>
+                <option value="prepaid">Prepaid / Online</option>
+              </select>
+
+              <select class="filter-select" id="filterDateRange" onchange="renderSellerOrdersTable()">
+                <option value="all">Order Date (All)</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+              </select>
+            </div>
+
+            <div class="filter-search-box">
+              <select class="search-field-select" id="searchFieldSelect">
+                <option value="any">Search All</option>
+                <option value="orderId">Order ID</option>
+                <option value="phone">Phone</option>
+                <option value="product">Book Title</option>
+              </select>
+              <input type="text" class="search-input-field" id="sellerSearchInput" placeholder="Search orders..." oninput="renderSellerOrdersTable()">
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="hub-table-card">
+            <table class="hub-table" id="sellerOrdersTable">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date &amp; Time</th>
+                  <th>Product Details</th>
+                  <th>Customer Info</th>
+                  <th>Payment</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sellerOrdersTableBody">
+                <!-- Dynamically populated by seller.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+
+        <!-- =======================================================
+             VIEW 2: BUSINESS DASHBOARD
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-dashboard" style="display: none;">
+          <div class="dashboard-header-bar">
+            <div>
+              <h2 class="dashboard-heading">Business Overview</h2>
+              <p style="font-size: 13px; color: #64748b; margin-top: 3px;" id="dashDateSubtitle">Live Statistics &middot; JK Study Hub Operations</p>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn-hub-secondary" onclick="confirmResetAllToZero()" style="color: #dc2626; border-color: #fecaca; background: #fff; font-weight: 700; font-size: 12.5px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-rotate-left"></i> Reset to 0 (Fresh Slate)
+              </button>
+              <div class="timeframe-pill-group">
+                <button type="button" class="timeframe-btn" onclick="setDashboardTimeframe('yesterday', this)">Yesterday</button>
+                <button type="button" class="timeframe-btn active" onclick="setDashboardTimeframe('7days', this)">Last 7 Days</button>
+                <button type="button" class="timeframe-btn" onclick="setDashboardTimeframe('30days', this)">Last 30 Days</button>
+                <button type="button" class="timeframe-btn" onclick="setDashboardTimeframe('custom', this)">Custom Date</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Graph & Trend Card -->
+          <div class="analytics-chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-title">Orders &amp; Revenue Growth</div>
+              <div class="chart-mode-toggles">
+                <button type="button" class="chart-toggle-btn active" id="chartToggleOrders" onclick="toggleChartMode('orders')">Orders</button>
+                <button type="button" class="chart-toggle-btn" id="chartToggleSales" onclick="toggleChartMode('sales')">Sales</button>
+              </div>
+            </div>
+
+            <div style="height: 180px; display: flex; align-items: center; justify-content: center; background: #fafafa; border-radius: 8px; border: 1px dashed #e2e8f0; text-align: center; padding: 20px;">
+              <div>
+                <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Bar%20Chart.png" style="width: 50px; margin-bottom: 8px;" alt="Chart">
+                <div style="font-weight: 800; color: #1e293b; font-size: 14.5px;">Live Performance Velocity</div>
+                <div style="font-size: 12.5px; color: #64748b; margin-top: 2px;" id="chartSummaryText">Tracking live visitor engagement, clicks, downloads, and sales across Kashmir...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7 Core KPI Metric Cards Strip -->
+          <div class="kpi-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+            <div class="kpi-card-box">
+              <div class="kpi-title">Total Views <i class="fa-solid fa-circle-info" style="font-size: 10px;"></i></div>
+              <div class="kpi-value" id="kpiTotalViews">0</div>
+              <div class="kpi-sub-trend" style="color: #64748b;"><i class="fa-solid fa-eye"></i> Real Visits</div>
+            </div>
+
+            <div class="kpi-card-box">
+              <div class="kpi-title">Total Clicks <i class="fa-solid fa-circle-info" style="font-size: 10px;"></i></div>
+              <div class="kpi-value" id="kpiTotalClicks">0</div>
+              <div class="kpi-sub-trend" style="color: #64748b;"><i class="fa-solid fa-arrow-pointer"></i> Product Clicks</div>
+            </div>
+
+            <div class="kpi-card-box">
+              <div class="kpi-title">Study Downloads <i class="fa-solid fa-circle-info" style="font-size: 10px;"></i></div>
+              <div class="kpi-value" id="kpiTotalDownloads">0</div>
+              <div class="kpi-sub-trend" style="color: #2563eb;"><i class="fa-solid fa-file-arrow-down"></i> PYQs / Notes</div>
+            </div>
+
+            <div class="kpi-card-box">
+              <div class="kpi-title">Total Orders</div>
+              <div class="kpi-value" id="kpiTotalOrders">0</div>
+              <div class="kpi-sub-trend" style="color: #64748b;"><i class="fa-solid fa-bag-shopping"></i> Real Orders</div>
+            </div>
+
+            <div class="kpi-card-box">
+              <div class="kpi-title">Conversion Rate <i class="fa-solid fa-circle-info" style="font-size: 10px;"></i></div>
+              <div class="kpi-value" id="kpiConversionRate">0.0%</div>
+              <div class="kpi-sub-trend" style="color: #64748b;">Orders / Views</div>
+            </div>
+
+            <div class="kpi-card-box">
+              <div class="kpi-title">Total Sales</div>
+              <div class="kpi-value" id="kpiTotalSales">₹0</div>
+              <div class="kpi-sub-trend" style="color: #10b981;">Net Revenue</div>
+            </div>
+
+            <div class="kpi-card-box">
+              <div class="kpi-title">Return Rate</div>
+              <div class="kpi-value" id="kpiReturnPct">0.0%</div>
+              <div class="kpi-sub-trend" style="color: #10b981;">Low RTO Rate</div>
+            </div>
+          </div>
+
+          <!-- Product Performance Table Section -->
+          <div class="product-performance-section">
+            <div class="perf-section-head">
+              <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">Product Performance</h3>
+              <div class="filter-search-box" style="min-width: 250px;">
+                <input type="text" class="search-input-field" placeholder="Search by Product ID or SKU..." id="perfSearchInput" oninput="renderProductPerformanceTable()">
+              </div>
+            </div>
+
+            <div class="perf-tabs-list">
+              <button type="button" class="perf-tab-item active" onclick="setPerfFilterTab('all', this)">All (<span id="countPerfAll">0</span>)</button>
+              <button type="button" class="perf-tab-item" onclick="setPerfFilterTab('low_orders', this)">Low Orders (0)</button>
+              <button type="button" class="perf-tab-item" onclick="setPerfFilterTab('low_views', this)">Low Views (0)</button>
+              <button type="button" class="perf-tab-item" onclick="setPerfFilterTab('low_conv', this)">Low Conversion Rate (0)</button>
+              <button type="button" class="perf-tab-item" onclick="setPerfFilterTab('high_returns', this)">High Returns (0)</button>
+            </div>
+
+            <div class="hub-table-card" style="border: 1px solid var(--hub-border); border-radius: 8px;">
+              <table class="hub-table">
+                <thead>
+                  <tr>
+                    <th>Product Details</th>
+                    <th>Views</th>
+                    <th>Clicks</th>
+                    <th>Orders</th>
+                    <th>Conversions</th>
+                    <th>Sales</th>
+                    <th>Returns</th>
+                    <th>Recommendations</th>
+                  </tr>
+                </thead>
+                <tbody id="productPerfTableBody">
+                  <!-- Populated by seller.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Real Visitor Analytics: Downloads & Demands Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; margin-top: 24px;">
+
+            <!-- Section 1: What Students Download -->
+            <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div>
+                  <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-file-arrow-down" style="color: #2563eb;"></i> Student Downloads
+                  </h3>
+                  <p style="font-size: 12px; color: #64748b; margin: 2px 0 0;">What syllabus, PYQs &amp; notes students are downloading</p>
+                </div>
+                <span class="hub-badge" style="background: #eff6ff; color: #1d4ed8;" id="countStudentDownloads">0 Files</span>
+              </div>
+
+              <div class="hub-table-card" style="border: 1px solid #f1f5f9; border-radius: 8px; max-height: 320px; overflow-y: auto;">
+                <table class="hub-table">
+                  <thead>
+                    <tr>
+                      <th>Document / Paper</th>
+                      <th>Type</th>
+                      <th>Downloads</th>
+                      <th>Last Downloaded</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentDownloadsTableBody">
+                    <!-- Populated by seller.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Section 2: What Students Want (Search Queries) -->
+            <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div>
+                  <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-magnifying-glass" style="color: #7c3aed;"></i> Student Demand &amp; Searches
+                  </h3>
+                  <p style="font-size: 12px; color: #64748b; margin: 2px 0 0;">What books &amp; subjects students are searching for in the store</p>
+                </div>
+                <span class="hub-badge" style="background: #faf5ff; color: #7e22ce;" id="countStudentSearches">0 Searches</span>
+              </div>
+
+              <div class="hub-table-card" style="border: 1px solid #f1f5f9; border-radius: 8px; max-height: 320px; overflow-y: auto;">
+                <table class="hub-table">
+                  <thead>
+                    <tr>
+                      <th>Search Keyword</th>
+                      <th>Times Searched</th>
+                      <th>Status / Demand</th>
+                      <th>Last Searched</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentSearchesTableBody">
+                    <!-- Populated by seller.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section 3: Live Real-Time Visitor Activity Stream -->
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 20px; margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <div>
+                <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16,185,129,0.2);"></span>
+                  Real-Time Visitor Activity Pulse
+                </h3>
+                <p style="font-size: 12px; color: #64748b; margin: 2px 0 0;">Live actions as visitors browse, click books, search, and download materials</p>
+              </div>
+              <button type="button" class="btn-hub-secondary" onclick="renderLiveActivityStream()" style="font-size: 11.5px; padding: 4px 10px;">
+                <i class="fa-solid fa-rotate"></i> Refresh Feed
+              </button>
+            </div>
+
+            <div id="liveActivityStreamList" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+              <!-- Populated by seller.js -->
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =======================================================
+             VIEW 3: INVENTORY & CATALOG UPLOADS
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-catalog" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Upload New Catalog Product</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Add syllabus textbooks, notes, and stationery. Will publish to the store and synchronize with Google Sheets automatically.</p>
+
+            <form id="sellerCatalogForm" onsubmit="handleSellerCatalogSubmit(event)">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div>
+                  <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Book / Product Title *</label>
+                  <input type="text" id="catTitle" class="seller-lock-input" placeholder="e.g. JKBOSE Class 12th Physics Guide" required>
+                </div>
+                <div>
+                  <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Category *</label>
+                  <select id="catCategory" class="seller-lock-input" required>
+                    <option value="academic">Academic / Board Exam Guides</option>
+                    <option value="novels">Novels &amp; Bestsellers</option>
+                    <option value="stationery">Stationery &amp; Study Supplies</option>
+                    <option value="digital">Digital &amp; Form Filling Services</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Selling Price (₹) *</label>
+                  <input type="number" id="catPrice" class="seller-lock-input" placeholder="e.g. 199" required min="1">
+                </div>
+                <div>
+                  <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">MRP (Original Price ₹)</label>
+                  <input type="number" id="catMrp" class="seller-lock-input" placeholder="e.g. 350" min="1">
+                </div>
+                <div>
+                  <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Stock Available</label>
+                  <input type="number" id="catStock" class="seller-lock-input" placeholder="e.g. 25" value="20" min="0">
+                </div>
+                <div>
+                  <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Badge / Highlight Tag</label>
+                  <select id="catBadge" class="seller-lock-input">
+                    <option value="✨ Fresh Stock">✨ Fresh Stock</option>
+                    <option value="🔥 Bestseller">🔥 Bestseller</option>
+                    <option value="⚡ Fast Dispatch">⚡ Fast Dispatch</option>
+                    <option value="📚 Board Exam 2026">📚 Board Exam 2026</option>
+                    <option value="⭐ Top Rated">⭐ Top Rated</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Multi-Photo Direct Upload Cards (2 to 3 photos) -->
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
+                  <label style="font-size: 13px; font-weight: 800; color: #0f172a;">
+                    📸 Product Photos (Upload 2 to 3 Photos directly from Camera or Gallery) *
+                  </label>
+                  <span style="font-size: 11.5px; color: #64748b;">No image link needed • Auto-compressed • Swipe preview on store</span>
+                </div>
+
+                <div class="seller-photo-grid">
+                  <!-- Photo Slot 1 (Required) -->
+                  <div class="seller-photo-slot" id="sellerPhotoSlot1">
+                    <input type="file" id="sellerPhotoGallery1" accept="image/*" style="display: none;" onchange="handleSellerPhotoSelected(event, 1)">
+                    <input type="file" id="sellerPhotoCamera1" accept="image/*" capture="environment" style="display: none;" onchange="handleSellerPhotoSelected(event, 1)">
+                    <div class="seller-slot-placeholder" id="sellerSlotPlaceholder1" onclick="document.getElementById('sellerPhotoGallery1').click()">
+                      <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px; color:#2563eb; margin-bottom:4px;"></i>
+                      <div class="slot-title">Photo 1 (Front Cover) *</div>
+                      <div style="display: flex; gap: 6px; margin-top: 8px; justify-content: center;">
+                        <button type="button" class="btn-slot-upload-opt" onclick="event.stopPropagation(); document.getElementById('sellerPhotoGallery1').click()" title="Choose photo from gallery or computer">
+                          <i class="fa-solid fa-images"></i> Gallery
+                        </button>
+                        <button type="button" class="btn-slot-upload-opt" onclick="event.stopPropagation(); document.getElementById('sellerPhotoCamera1').click()" title="Take photo with camera">
+                          <i class="fa-solid fa-camera"></i> Camera
+                        </button>
+                      </div>
+                    </div>
+                    <img id="sellerSlotPreview1" class="seller-slot-img" alt="Photo 1" style="display: none;">
+                    <button type="button" class="seller-slot-remove-btn" id="sellerSlotRemove1" title="Remove Photo 1" onclick="removeSellerPhoto(event, 1)" style="display: none;">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <!-- Photo Slot 2 (Optional) -->
+                  <div class="seller-photo-slot" id="sellerPhotoSlot2">
+                    <input type="file" id="sellerPhotoGallery2" accept="image/*" style="display: none;" onchange="handleSellerPhotoSelected(event, 2)">
+                    <input type="file" id="sellerPhotoCamera2" accept="image/*" capture="environment" style="display: none;" onchange="handleSellerPhotoSelected(event, 2)">
+                    <div class="seller-slot-placeholder" id="sellerSlotPlaceholder2" onclick="document.getElementById('sellerPhotoGallery2').click()">
+                      <i class="fa-solid fa-images" style="font-size:22px; color:#2563eb; margin-bottom:4px;"></i>
+                      <div class="slot-title">Photo 2 (Back / Index)</div>
+                      <div style="display: flex; gap: 6px; margin-top: 8px; justify-content: center;">
+                        <button type="button" class="btn-slot-upload-opt" onclick="event.stopPropagation(); document.getElementById('sellerPhotoGallery2').click()" title="Choose photo from gallery or computer">
+                          <i class="fa-solid fa-images"></i> Gallery
+                        </button>
+                        <button type="button" class="btn-slot-upload-opt" onclick="event.stopPropagation(); document.getElementById('sellerPhotoCamera2').click()" title="Take photo with camera">
+                          <i class="fa-solid fa-camera"></i> Camera
+                        </button>
+                      </div>
+                    </div>
+                    <img id="sellerSlotPreview2" class="seller-slot-img" alt="Photo 2" style="display: none;">
+                    <button type="button" class="seller-slot-remove-btn" id="sellerSlotRemove2" title="Remove Photo 2" onclick="removeSellerPhoto(event, 2)" style="display: none;">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <!-- Photo Slot 3 (Optional) -->
+                  <div class="seller-photo-slot" id="sellerPhotoSlot3">
+                    <input type="file" id="sellerPhotoGallery3" accept="image/*" style="display: none;" onchange="handleSellerPhotoSelected(event, 3)">
+                    <input type="file" id="sellerPhotoCamera3" accept="image/*" capture="environment" style="display: none;" onchange="handleSellerPhotoSelected(event, 3)">
+                    <div class="seller-slot-placeholder" id="sellerSlotPlaceholder3" onclick="document.getElementById('sellerPhotoGallery3').click()">
+                      <i class="fa-solid fa-book-open" style="font-size:22px; color:#2563eb; margin-bottom:4px;"></i>
+                      <div class="slot-title">Photo 3 (Inside / Sample)</div>
+                      <div style="display: flex; gap: 6px; margin-top: 8px; justify-content: center;">
+                        <button type="button" class="btn-slot-upload-opt" onclick="event.stopPropagation(); document.getElementById('sellerPhotoGallery3').click()" title="Choose photo from gallery or computer">
+                          <i class="fa-solid fa-images"></i> Gallery
+                        </button>
+                        <button type="button" class="btn-slot-upload-opt" onclick="event.stopPropagation(); document.getElementById('sellerPhotoCamera3').click()" title="Take photo with camera">
+                          <i class="fa-solid fa-camera"></i> Camera
+                        </button>
+                      </div>
+                    </div>
+                    <img id="sellerSlotPreview3" class="seller-slot-img" alt="Photo 3" style="display: none;">
+                    <button type="button" class="seller-slot-remove-btn" id="sellerSlotRemove3" title="Remove Photo 3" onclick="removeSellerPhoto(event, 3)" style="display: none;">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style="font-size: 12.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Description / Exam Details *</label>
+                <textarea id="catDescription" class="seller-lock-input" rows="3" placeholder="Features, syllabus coverage, edition details..." required></textarea>
+              </div>
+
+              <div id="sellerCatalogStatusNotice" style="display: none; margin-top: 12px; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;"></div>
+
+              <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                <button type="submit" id="btnSellerPublishCatalog" class="btn-hub-primary" style="padding: 11px 26px; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Publish Live to Store &amp; Google Sheets
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- =======================================================
+               LIVE PUBLISHED PRODUCTS ON STORE
+               ======================================================= -->
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">Live Products on Storefront</h3>
+                <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0;">Products currently visible to all students on JK Study Hub store.</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span id="sellerCatalogTotalBadge" style="background: #eff6ff; color: #2563eb; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px;">0 Live Products</span>
+                <a href="https://jkstudyhub.online/store.html" target="_blank" class="btn-hub-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Live Store
+                </a>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="supplier-data-table" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">Photos</th>
+                    <th>Product Title &amp; Details</th>
+                    <th>Category</th>
+                    <th style="width: 150px;">Rate &amp; MRP (₹) <i class="fa-solid fa-pen" style="font-size: 10px; color: #2563eb;" title="Editable on-the-fly"></i></th>
+                    <th>Stock</th>
+                    <th>Sync Status</th>
+                    <th style="text-align: center; width: 130px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="sellerPublishedProductsTableBody">
+                  <!-- Populated dynamically via renderSellerPublishedCatalog() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        
+            <!-- =======================================================
+                 SUPPLIER SOURCING PLAYBOOK & LOGISTICS DIRECTORY
+                 ======================================================= -->
+            <div style="background: white; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 22px; margin-top: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                <span style="font-size: 24px;">🏭</span>
+                <div>
+                  <h3 style="font-size: 17px; font-weight: 800; color: #0f172a; margin: 0;">Secret Wholesale Sourcing Directory &amp; Sourcing Playbook</h3>
+                  <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0;">Private guide on where to buy copies &amp; books at factory prices to guarantee high profit margins.</p>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                
+                <!-- Hub 1: Delhi Nai Sarak & Chawri Bazar -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13.5px; font-weight: 800; color: #1e3a8a;">1. Delhi – Nai Sarak &amp; Chawri Bazar</span>
+                    <span style="background: #dbeafe; color: #1e40af; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px;">Top Factory Hub</span>
+                  </div>
+                  <p style="font-size: 12px; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+                    India's largest paper &amp; notebook manufacturing cluster. Exercise copies cost <strong>₹18–₹26 wholesale</strong> (which shops sell for ₹50–₹60). Novels cost <strong>₹70–₹110</strong> (sell for ₹200–₹290).
+                  </p>
+                  <div style="font-size: 11.5px; color: #166534; font-weight: 700;">
+                    <i class="fa-solid fa-truck-moving"></i> Cargo: Daily transport trucks directly to Parimpora Srinagar (~₹2/copy freight).
+                  </div>
+                </div>
+
+                <!-- Hub 2: Srinagar Maisuma & Red Cross Road -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13.5px; font-weight: 800; color: #047857;">2. Srinagar – Maisuma &amp; Red Cross Road</span>
+                    <span style="background: #dcfce7; color: #15803d; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px;">Local Kashmir Hub</span>
+                  </div>
+                  <p style="font-size: 12px; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+                    Central wholesale stationery market in Srinagar. Ideal for fast restocks in lots of 50–100 pieces without travelling to Delhi.
+                  </p>
+                  <div style="font-size: 11.5px; color: #047857; font-weight: 700;">
+                    <i class="fa-solid fa-handshake"></i> Margin: 25% to 35% discount on MRP for carton purchases.
+                  </div>
+                </div>
+
+                <!-- Hub 3: Parimpora Transport Nagar Cargo -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13.5px; font-weight: 800; color: #b45309;">3. Parimpora Cargo Depots</span>
+                    <span style="background: #fef3c7; color: #92400e; font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px;">Logistics</span>
+                  </div>
+                  <p style="font-size: 12px; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+                    Major cargo carriers receiving parcels from Delhi/Jalandhar: <strong>TCI Express, Kashmir Golden Transport, V-Trans &amp; ARC</strong>.
+                  </p>
+                  <div style="font-size: 11.5px; color: #b45309; font-weight: 700;">
+                    <i class="fa-solid fa-clock"></i> Delivery Time: 3 to 5 days transit from Delhi to Srinagar.
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+        <!-- =======================================================
+             VIEW: LIVE PRICING & DISCOUNT MANAGER
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-pricing" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-tags" style="color: #2563eb;"></i> Live Product Pricing &amp; Rate Changer
+                </h2>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">Change the MRP and selling price of any book, kit, or stationery anytime. Updates broadcast instantly via Firebase Firestore to all live visitors across the store, checkout invoices, and WhatsApp orders.</p>
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn-hub-secondary" onclick="exportSellerPricesJson()" style="font-size: 12px; color: #166534; border-color: #bbf7d0; background: #f0fdf4;" title="Download current rates as prices.json">
+                  <i class="fa-solid fa-download"></i> Download prices.json
+                </button>
+                <button type="button" class="btn-hub-secondary" onclick="copySellerPricesJson()" style="font-size: 12px; color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff;" title="Copy rates as JSON">
+                  <i class="fa-solid fa-copy"></i> Copy JSON
+                </button>
+                <label class="btn-hub-secondary" style="font-size: 12px; color: #4338ca; border-color: #c7d2fe; background: #eef2ff; cursor: pointer; margin: 0; display: inline-flex; align-items: center; gap: 6px;" title="Upload an edited prices.json file">
+                  <i class="fa-solid fa-upload"></i> Upload prices.json
+                  <input type="file" id="importPricesJsonInput" accept=".json" onchange="importSellerPricesJson(this)" style="display: none;">
+                </label>
+                <button type="button" class="btn-hub-secondary" onclick="resetAllSellerPricesToDefault()" style="font-size: 12px; color: #dc2626; border-color: #fecaca; background: #fff5f5;">
+                  <i class="fa-solid fa-rotate-left"></i> Reset All to Default
+                </button>
+              </div>
+            </div>
+
+            <!-- No-Code Helper Callout Banner -->
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px dashed #86efac; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #166534;">
+                <i class="fa-solid fa-bolt" style="font-size: 16px; color: #16a34a;"></i>
+                <span><strong>Instant No-Code Price Updates:</strong> Edit any price or MRP directly in the table below and click <strong style="color:#0f172a;">Save</strong>. OR edit the file <code style="background:#dcfce7; padding:2px 6px; border-radius:4px; font-weight:700; color:#14532d;">prices.json</code> in your project folder anytime!</span>
+              </div>
+              <div style="font-size: 11.5px; font-weight: 700; color: #047857;">
+                <i class="fa-solid fa-shield-check"></i> Zero Code Knowledge Required
+              </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Products</span>
+                <div style="font-size: 22px; font-weight: 900; color: #0f172a; margin-top: 2px;" id="pricingTotalProductsCount">0</div>
+              </div>
+              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #065f46; font-weight: 700; text-transform: uppercase;">Custom Overrides Active</span>
+                <div style="font-size: 22px; font-weight: 900; color: #047857; margin-top: 2px;" id="pricingCustomOverridesCount">0</div>
+              </div>
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #1e40af; font-weight: 700; text-transform: uppercase;">Store Sync Status</span>
+                <div style="font-size: 14px; font-weight: 800; color: #2563eb; margin-top: 6px;">
+                  <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> 100% Live on Store
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 540px;">
+                <div style="position: relative; flex: 1; min-width: 220px;">
+                  <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+                  <input type="text" id="pricingSearchInput" oninput="filterPricingProductsTable()" placeholder="Search product name..." style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                </div>
+                <select id="pricingCategoryFilter" onchange="filterPricingProductsTable()" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
+                  <option value="all">All Categories</option>
+                  <option value="exam-kits">Board Exam Master Kits</option>
+                  <option value="books">Novels &amp; Bestsellers</option>
+                  <option value="school-books">School Book Sets (1st-12th)</option>
+                  <option value="notes">Notes &amp; PYQs</option>
+                  <option value="stationery">Stationery &amp; Supplies</option>
+                  <option value="digital">Digital &amp; Forms</option>
+                </select>
+              </div>
+
+              <div id="pricingFeedbackMessage" style="display: none; font-size: 12.5px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 6px 14px; border-radius: 6px;"></div>
+            </div>
+
+            <!-- Pricing Table -->
+            <div class="table-responsive" style="max-height: 560px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <table class="supplier-data-table" style="width: 100%; margin: 0;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5;">
+                  <tr>
+                    <th style="width: 50px;">Item</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th style="width: 115px;">MRP (₹) <i class="fa-solid fa-pen" style="font-size: 10px; color: #2563eb;" title="Editable MRP"></i></th>
+                    <th style="width: 130px;">Selling Price (₹) <i class="fa-solid fa-pen" style="font-size: 10px; color: #16a34a;" title="Editable Selling Price"></i></th>
+                    <th style="width: 95px;">Discount</th>
+                    <th style="width: 130px; text-align: center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="sellerPricingTableBody">
+                  <!-- Populated by seller.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =======================================================
+             VIEW: STOCK & INVENTORY CONTROL
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-inventory" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 18px;">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-boxes-stacked" style="color: #2563eb;"></i> Stock &amp; Inventory Management
+                </h2>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">
+                  Manage live stock status (<strong style="color:#16a34a;">In Stock</strong>, <strong style="color:#d97706;">Low Stock</strong>, <strong style="color:#dc2626;">Out of Stock</strong>) and remaining quantity. Out-of-stock items automatically disable checkout on the store.
+                </p>
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn-hub-secondary" onclick="bulkRestockAll(25)" style="font-size: 12px; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-weight: 700;">
+                  <i class="fa-solid fa-box-archive"></i> Restock All (25 Units)
+                </button>
+                <button type="button" class="btn-hub-secondary" onclick="resetAllSellerStockToDefault()" style="font-size: 12px; color: #dc2626; border-color: #fecaca; background: #fff5f5; font-weight: 700;">
+                  <i class="fa-solid fa-rotate-left"></i> Reset All Stock
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Monitored Items</span>
+                <div style="font-size: 22px; font-weight: 900; color: #0f172a; margin-top: 2px;" id="inventoryTotalCount">0</div>
+              </div>
+              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #065f46; font-weight: 700; text-transform: uppercase;">In Stock Items</span>
+                <div style="font-size: 22px; font-weight: 900; color: #047857; margin-top: 2px;" id="inventoryInStockCount">0</div>
+              </div>
+              <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #92400e; font-weight: 700; text-transform: uppercase;">Low Stock Warning</span>
+                <div style="font-size: 22px; font-weight: 900; color: #b45309; margin-top: 2px;" id="inventoryLowStockCount">0</div>
+              </div>
+              <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #991b1b; font-weight: 700; text-transform: uppercase;">Out of Stock (Sold Out)</span>
+                <div style="font-size: 22px; font-weight: 900; color: #dc2626; margin-top: 2px;" id="inventoryOutOfStockCount">0</div>
+              </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 680px;">
+                <div style="position: relative; flex: 1; min-width: 200px;">
+                  <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+                  <input type="text" id="inventorySearchInput" oninput="renderSellerInventoryTable()" placeholder="Search product name..." style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                </div>
+                <select id="inventoryCategoryFilter" onchange="renderSellerInventoryTable()" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
+                  <option value="all">All Categories</option>
+                  <option value="exam-kits">Board Exam Master Kits</option>
+                  <option value="books">Novels &amp; Bestsellers</option>
+                  <option value="school-books">School Book Sets (1st-12th)</option>
+                  <option value="notes">Notes &amp; PYQs</option>
+                  <option value="stationery">Stationery &amp; Supplies</option>
+                  <option value="digital">Digital &amp; Forms</option>
+                </select>
+                <select id="inventoryStatusFilter" onchange="renderSellerInventoryTable()" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
+                  <option value="all">All Stock Statuses</option>
+                  <option value="in_stock">🟢 In Stock Only</option>
+                  <option value="low_stock">🟡 Low Stock Only</option>
+                  <option value="out_of_stock">🔴 Out of Stock Only</option>
+                </select>
+              </div>
+
+              <div id="inventoryFeedbackMessage" style="display: none; font-size: 12.5px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 6px 14px; border-radius: 6px;"></div>
+            </div>
+
+            <!-- Inventory Table -->
+            <div class="table-responsive" style="max-height: 600px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <table class="supplier-data-table" style="width: 100%; margin: 0;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5;">
+                  <tr>
+                    <th style="width: 50px;">Item</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th style="width: 155px;">Stock Status</th>
+                    <th style="width: 110px;">Qty Left</th>
+                    <th style="width: 130px; text-align: center;">Live Store Badge</th>
+                    <th style="width: 180px; text-align: center;">Quick Action &amp; Save</th>
+                  </tr>
+                </thead>
+                <tbody id="sellerInventoryTableBody">
+                  <!-- Populated by seller.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- =======================================================
+             VIEW: DISTRICT & PIN CODE DELIVERY / COD RATE ENGINE
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-delivery" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 18px;">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-truck-ramp-box" style="color: #16a34a;"></i> District &amp; PIN Code Delivery / COD Rates
+                </h2>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">
+                  Set delivery charges and Cash on Delivery (COD) collection fees for all 20 J&amp;K districts and PIN codes. Toggle the <strong>"FREE"</strong> button to make delivery ₹0 for any district. You have 100% full manual control.
+                </p>
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn-hub-secondary" onclick="setAllDistrictsFree(true)" style="font-size: 12px; color: #15803d; border-color: #86efac; background: #f0fdf4; font-weight: 700;">
+                  <i class="fa-solid fa-gift"></i> Enable FREE Delivery for All
+                </button>
+                <button type="button" class="btn-hub-secondary" onclick="setAllDistrictsFree(false)" style="font-size: 12px; color: #b45309; border-color: #fde68a; background: #fffbeb; font-weight: 700;">
+                  <i class="fa-solid fa-hand-holding-dollar"></i> Set Custom Paid Charges
+                </button>
+                <button type="button" class="btn-hub-secondary" onclick="resetAllDistrictRatesToDefault()" style="font-size: 12px; color: #dc2626; border-color: #fecaca; background: #fff5f5; font-weight: 700;">
+                  <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total J&amp;K Districts</span>
+                <div style="font-size: 22px; font-weight: 900; color: #0f172a; margin-top: 2px;" id="deliveryTotalDistrictsCount">20</div>
+              </div>
+              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #065f46; font-weight: 700; text-transform: uppercase;">Free Delivery Districts</span>
+                <div style="font-size: 22px; font-weight: 900; color: #047857; margin-top: 2px;" id="deliveryFreeDistrictsCount">0</div>
+              </div>
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #1e40af; font-weight: 700; text-transform: uppercase;">COD Fee Overrides</span>
+                <div style="font-size: 22px; font-weight: 900; color: #2563eb; margin-top: 2px;" id="deliveryCodOverridesCount">0</div>
+              </div>
+              <div style="background: #fdf4ff; border: 1px solid #f0abfc; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 11.5px; color: #86198f; font-weight: 700; text-transform: uppercase;">Checkout Engine</span>
+                <div style="font-size: 14px; font-weight: 800; color: #a21caf; margin-top: 6px;">
+                  <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> 100% Live PIN Sync
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 600px;">
+                <div style="position: relative; flex: 1; min-width: 220px;">
+                  <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+                  <input type="text" id="deliverySearchInput" oninput="renderDistrictRatesTable()" placeholder="Search district name or PIN code (e.g. 193121, Srinagar)..." style="width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                </div>
+                <select id="deliveryDivisionFilter" onchange="renderDistrictRatesTable()" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
+                  <option value="all">All Divisions (20 Districts)</option>
+                  <option value="Kashmir">Kashmir Division (10 Districts)</option>
+                  <option value="Jammu">Jammu Division (10 Districts)</option>
+                </select>
+                <select id="deliveryStatusFilter" onchange="renderDistrictRatesTable()" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
+                  <option value="all">All Pricing Types</option>
+                  <option value="free">FREE Delivery Only</option>
+                  <option value="paid">Paid Delivery Only</option>
+                </select>
+              </div>
+
+              <div id="deliveryFeedbackMessage" style="display: none; font-size: 12.5px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 6px 14px; border-radius: 6px;"></div>
+            </div>
+
+            <!-- Rates Table -->
+            <div class="table-responsive" style="max-height: 600px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <table class="supplier-data-table" style="width: 100%; margin: 0;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5;">
+                  <tr>
+                    <th style="width: 180px;">District</th>
+                    <th>PIN Codes Covered</th>
+                    <th style="width: 130px;">Delivery Fee (₹)</th>
+                    <th style="width: 130px;">COD Fee (₹)</th>
+                    <th style="width: 150px; text-align: center;">FREE Button Toggle</th>
+                    <th style="width: 130px; text-align: center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="sellerDeliveryTableBody">
+                  <!-- Populated by seller.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section class="seller-view-pane" id="view-payments" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Payments &amp; Doorstep Collections</h2>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Cash on Delivery (COD) reconciliations vs online prepaid payments.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; padding: 18px;">
+                <div style="font-size: 12px; font-weight: 700; color: #854d0e;">Pending Doorstep COD</div>
+                <div style="font-size: 26px; font-weight: 900; color: #713f12; margin-top: 4px;" id="payPendingCod">₹0</div>
+                <div style="font-size: 11.5px; color: #a16207; margin-top: 4px;">To collect upon parcel handover</div>
+              </div>
+
+              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 18px;">
+                <div style="font-size: 12px; font-weight: 700; color: #065f46;">Collected Cash on Delivery</div>
+                <div style="font-size: 26px; font-weight: 900; color: #047857; margin-top: 4px;" id="payCollectedCod">₹0</div>
+                <div style="font-size: 11.5px; color: #059669; margin-top: 4px;">Verified with delivery OTP</div>
+              </div>
+
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 18px;">
+                <div style="font-size: 12px; font-weight: 700; color: #1e40af;">Prepaid Online Payments</div>
+                <div style="font-size: 26px; font-weight: 900; color: #1d4ed8; margin-top: 4px;" id="payOnlinePrepaid">₹0</div>
+                <div style="font-size: 11.5px; color: #2563eb; margin-top: 4px;">UPI / QR / Bank direct</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =======================================================
+             VIEW 5: SCHOOL PRE-ORDERS & BOOKLIST LEADS
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-leads" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 4px;">
+                  🏫 School Booklist Pre-Orders &amp; Inquiries
+                </h2>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">
+                  Live pre-orders and booklist quotation requests from parents and students for the upcoming academic session.
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-hub-secondary" onclick="exportPreorderLeadsCSV()">
+                  <i class="fa-solid fa-file-csv"></i> Export CSV
+                </button>
+                <button type="button" class="btn-hub-secondary" onclick="clearPreorderLeads()" style="color:#ef4444;">
+                  <i class="fa-solid fa-trash"></i> Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px;">
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px;">
+                <div style="font-size: 12px; font-weight: 700; color: #1e40af;">Total School Inquiries</div>
+                <div style="font-size: 26px; font-weight: 900; color: #1d4ed8; margin-top: 4px;" id="statTotalLeads">0</div>
+                <div style="font-size: 11px; color: #3b82f6; margin-top: 3px;">Pre-booking demand</div>
+              </div>
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px;">
+                <div style="font-size: 12px; font-weight: 700; color: #15803d;">Photos Attached</div>
+                <div style="font-size: 26px; font-weight: 900; color: #16a34a; margin-top: 4px;" id="statPhotoLeads">0</div>
+                <div style="font-size: 11px; color: #22c55e; margin-top: 3px;">Ready for instant quotation</div>
+              </div>
+              <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: 10px; padding: 16px;">
+                <div style="font-size: 12px; font-weight: 700; color: #854d0e;">Active School Hubs</div>
+                <div style="font-size: 26px; font-weight: 900; color: #a16207; margin-top: 4px;" id="statUniqueSchools">0</div>
+                <div style="font-size: 11px; color: #ca8a04; margin-top: 3px;">Different schools requested</div>
+              </div>
+            </div>
+
+            <!-- Leads Table Container -->
+            <div id="sellerLeadsTableContainer">
+              <div style="text-align: center; padding: 40px 20px; color: #64748b; font-size: 13.5px;">
+                <i class="fa-solid fa-graduation-cap" style="font-size: 32px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                No school pre-orders received yet. They will appear here automatically when parents submit booklist inquiries on the store!
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =======================================================
+             VIEW 6: VIDEO ADS & SHOPPABLE REELS (VIDEO COMMERCE)
+             ======================================================= -->
+        <section class="seller-view-pane" id="view-reels" style="display: none;">
+          <div style="background: white; border: 1px solid var(--hub-border); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                  <span style="background:#fee2e2; color:#dc2626; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">
+                    <i class="fa-solid fa-bolt"></i> HIGH CONVERSION ADS
+                  </span>
+                  <span style="font-size:12px; color:#2563eb; font-weight:700;">⚡ Instant 0-Sec Reload Optimized</span>
+                </div>
+                <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 4px; display:flex; align-items:center; gap:8px;">
+                  <i class="fa-solid fa-circle-play" style="color: #ef4444;"></i> Video Ads Manager
+                </h2>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">
+                  Sign in with an authorized Google account to publish videos to all students. Uploaded files use Firebase Storage; public video URLs can also be published directly. First-time setup: deploy storage.rules with “firebase deploy --only storage”.
+                </p>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://jkstudyhub.online/store.html#shoppableReelsSection" target="_blank" class="btn-hub-secondary" style="font-weight:700; color:#2563eb; border-color:#bfdbfe; background:#eff6ff; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i> Preview on Store
+                </a>
+                <button type="button" class="btn-hub-secondary" onclick="exportReelsJsonFile()" title="Download the video ad list for deployment" style="font-weight:700;">
+                  <i class="fa-solid fa-file-arrow-down"></i> Export reels.json
+                </button>
+              </div>
+            </div>
+
+            <div id="sellerVideoAdsPane">
+            <!-- Two-Column Layout: Upload & Configuration (Left) + Live 9:16 Mockup (Right) -->
+            <div style="display: grid; grid-template-columns: 1.25fr 0.85fr; gap: 24px; align-items: start;" id="sellerReelsGrid">
+              
+              <!-- Form Panel -->
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+                <h3 style="font-size: 15px; font-weight: 800; color: #1e293b; margin: 0 0 16px; display:flex; align-items:center; gap:8px;">
+                  <i class="fa-solid fa-cloud-arrow-up" style="color: #2563eb;"></i> Upload or Link New Video Ad
+                </h3>
+
+                <form id="sellerReelForm" onsubmit="event.preventDefault(); publishSellerReel();">
+                  <!-- 1. Reel Title / Caption -->
+                  <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                      Video Title <span style="color:#ef4444;">*</span>
+                    </label>
+                    <input type="text" id="sellerReelTitleInput" class="form-control" placeholder="e.g. Unboxing The Alchemist &middot; Page &amp; Print Quality Tour" required oninput="updateSellerReelMockup()" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;">
+                  </div>
+
+                  <!-- 2. Target Product Dropdown -->
+                  <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                      Product for Video Ad <span style="color:#ef4444;">*</span>
+                      <span style="font-weight:400; color:#64748b; font-size:11px;">(Live price and thumbnail sync automatically)</span>
+                    </label>
+                    <select id="sellerReelProductSelect" class="form-control" required onchange="onSellerReelProductSelectChange()" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px; font-weight:600;">
+                      <option value="">-- Choose Product to Advertise --</option>
+                    </select>
+                  </div>
+
+                  <!-- 3. Video Source (File Upload or Stream URL) -->
+                  <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                      Video File or Direct Video URL <span style="color:#ef4444;">*</span>
+                    </label>
+                    
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                      <button type="button" id="tabVideoFileBtn" class="btn-hub-secondary active" onclick="switchReelVideoInputType('file')" style="flex:1; font-size:12px; font-weight:700;">
+                        <i class="fa-solid fa-file-video"></i> Upload MP4 / MOV
+                      </button>
+                      <button type="button" id="tabVideoUrlBtn" class="btn-hub-secondary" onclick="switchReelVideoInputType('url')" style="flex:1; font-size:12px; font-weight:700;">
+                        <i class="fa-solid fa-link"></i> Paste Video URL
+                      </button>
+                    </div>
+
+                    <!-- File input -->
+                    <div id="reelFileInputGroup">
+                      <input type="file" id="sellerReelFileInput" accept="video/mp4,video/webm,video/quicktime" onchange="handleSellerReelFileSelected(this)" style="display:block; width:100%; font-size:12.5px; padding:8px; background:white; border:1px dashed #94a3b8; border-radius:8px; cursor:pointer;">
+                      <div style="font-size:11px; color:#64748b; margin-top:4px;">
+                          💡 Local file previews are saved on this device. Host the video publicly and use its direct URL to publish it for all visitors.
+                      </div>
+                    </div>
+
+                    <!-- URL input -->
+                    <div id="reelUrlInputGroup" style="display: none;">
+                      <input type="url" id="sellerReelUrlInput" class="form-control" placeholder="https://your-host/video.mp4" oninput="handleSellerReelUrlInput(this.value)" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;">
+                    </div>
+                  </div>
+
+                  <!-- 4. Quality & Fast Reload Extraction Box -->
+                  <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                      <span style="font-size: 12px; font-weight: 700; color: #1e293b;">
+                        ⚡ Fast Reload &amp; Poster Extraction
+                      </span>
+                      <span id="sellerReelQualityBadge" style="font-size: 10.5px; font-weight: 800; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px;">
+                        Waiting for Video
+                      </span>
+                    </div>
+                    <div style="font-size: 11.5px; color: #64748b;" id="sellerReelQualityDetails">
+                      Once a video is chosen, our automatic poster pipeline renders an instant-load thumbnail frame so customers experience 0-sec lag.
+                    </div>
+                  </div>
+
+                  <!-- 5. Promotional Badge Tag -->
+                  <div style="margin-bottom: 18px;">
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                      Overlay Badge
+                    </label>
+                    <div style="display:flex; gap:8px;">
+                      <input type="text" id="sellerReelBadgeInput" class="form-control" value="🔥 Most Popular" placeholder="e.g. ⭐ 4.9 Bestseller, 📦 5 Subject Combo" oninput="updateSellerReelMockup()" style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;">
+                      <button type="button" class="btn-hub-secondary" onclick="document.getElementById('sellerReelBadgeInput').value='⭐ 4.9 Bestseller'; updateSellerReelMockup();" style="font-size:11px; padding:6px 10px;">⭐ Star</button>
+                      <button type="button" class="btn-hub-secondary" onclick="document.getElementById('sellerReelBadgeInput').value='🔥 Trending Now'; updateSellerReelMockup();" style="font-size:11px; padding:6px 10px;">🔥 Fire</button>
+                    </div>
+                  </div>
+
+                  <!-- Hidden canvas for poster extraction -->
+                  <canvas id="sellerPosterCanvas" style="display:none;"></canvas>
+
+                  <!-- Submit button -->
+                  <button type="submit" id="btnPublishSellerReel" class="btn-hub-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 800; justify-content: center; background: #2563eb; box-shadow: 0 4px 14px rgba(37,99,235,0.35);">
+                    <i class="fa-solid fa-circle-check"></i> Save Video Ad
+                  </button>
+                </form>
+              </div>
+
+              <!-- Right: Live 9:16 Mockup Preview -->
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display:flex; align-items:center; gap:6px;">
+                  <i class="fa-solid fa-mobile-screen"></i> Live 9:16 Storefront Mockup
+                </div>
+                
+                <!-- Mockup Card Container -->
+                <div id="sellerReelMockupCard" style="width: 230px; height: 410px; background: #0f172a; border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1); border: 2px solid #334155;">
+                  
+                  <!-- Video element in mockup -->
+                  <video id="sellerMockupVideo" style="width: 100%; height: 100%; object-fit: cover; background: #000;" playsinline autoplay muted loop></video>
+
+                  <!-- Top Bar -->
+                  <div style="position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; z-index: 5;">
+                    <span id="mockupBadgeText" style="background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); color: #fff; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                      🔥 Most Popular
+                    </span>
+                    <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px;">
+                      <i class="fa-solid fa-volume-xmark"></i>
+                    </div>
+                  </div>
+
+                  <!-- Play button indicator -->
+                  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; pointer-events: none;">
+                    <i class="fa-solid fa-play"></i>
+                  </div>
+
+                  <!-- Bottom product chip & Shop Now button matching screenshot -->
+                  <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 10px 10px 10px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.96) 100%); z-index: 6; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.14); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 5px 8px;">
+                      <img id="mockupProdThumb" src="images/logo-app.png" alt="Preview" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; background: #fff; flex-shrink: 0;">
+                      <div style="overflow: hidden; flex: 1;">
+                        <div id="mockupProdTitle" style="font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Select a Product</div>
+                        <div style="display: flex; align-items: baseline; gap: 5px; margin-top: 1px;">
+                          <span id="mockupProdPrice" style="font-size: 11px; font-weight: 800; color: #fff;">₹0</span>
+                          <span id="mockupProdMrp" style="font-size: 9.5px; text-decoration: line-through; opacity: 0.65; color: #cbd5e1;">₹0</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="width: 100%; background: #2563eb; color: #fff; border-radius: 6px; padding: 7px 0; font-size: 11.5px; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                      <i class="fa-solid fa-bag-shopping" style="font-size:10px;"></i> Shop now
+                    </div>
+                  </div>
+                </div>
+
+                <div style="font-size: 11.5px; color: #64748b; margin-top: 10px; text-align: center;">
+                  Exact 9:16 vertical card with synchronized store pricing
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Published Video Reels Table -->
+            <div style="margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0; display:flex; align-items:center; gap:8px;">
+                  <i class="fa-solid fa-list-check" style="color: #2563eb;"></i> Currently Active Shoppable Video Reels (<span id="activeReelsCount">0</span>)
+                </h3>
+                <span style="font-size: 12px; color: #64748b;">Instant live update on storefront upon change</span>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="hub-table" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left;">
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569;">PREVIEW</th>
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569;">REEL TITLE &amp; BADGE</th>
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569;">ADVERTISED PRODUCT</th>
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569;">STORE RATE</th>
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569;">RELOAD SPEED</th>
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569;">STATUS</th>
+                      <th style="padding: 10px 14px; font-size: 11.5px; font-weight: 700; color: #475569; text-align: right;">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sellerPublishedReelsTableBody">
+                    <!-- Populated by seller.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- =========================================================
+       MODAL 1: THERMAL SHIPPING LABEL & PERSONALIZED CARD
+       ========================================================= -->
+  <div class="seller-modal-backdrop" id="sellerShippingLabelModal">
+    <div class="seller-modal-card" style="max-width: 980px; width: 95%;">
+      <div class="seller-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">🖨️</span>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0;">Shipping Label &amp; Personalized Student Reward Card</h3>
+            <p style="font-size: 11.5px; color: #64748b; margin: 2px 0 0;">Left: Customer Thank You &amp; ₹20 Reward Card (With Order ID) &middot; Right: Logistics Shipping Label</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeSellerModal('sellerShippingLabelModal')" style="background:none; border:none; font-size:24px; cursor:pointer; color:#64748b;">&times;</button>
+      </div>
+      <div class="seller-modal-body" style="background: #f1f5f9; padding: 18px; max-height: 80vh; overflow-y: auto;">
+        <div id="sellerShippingLabelSheet">
+          <!-- Generated by seller.js -->
+        </div>
+      </div>
+      <div style="padding: 14px 20px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <button type="button" class="btn-hub-secondary" onclick="closeSellerModal('sellerShippingLabelModal')">Close</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-hub-secondary" onclick="printSellerShippingLabel('card')" title="Print only the personalized Thank You Card" style="font-weight: 700; color: #b45309; border-color: #fde68a; background: #fffbeb;">
+            <i class="fa-solid fa-gift"></i> Print Card Only
+          </button>
+          <button type="button" class="btn-hub-secondary" onclick="printSellerShippingLabel('label')" title="Print only the shipping address label" style="font-weight: 700;">
+            <i class="fa-solid fa-barcode"></i> Print Label Only
+          </button>
+          <button type="button" class="btn-hub-primary" onclick="printSellerShippingLabel('all')" style="font-weight: 800; background: #1e3a8a;">
+            <i class="fa-solid fa-print"></i> Print Label &amp; Card (Side-by-Side)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL 2: IN-APP CAMERA BARCODE & QR CODE SCANNER
+       ========================================================= -->
+  <div class="scanner-modal-backdrop" id="sellerBarcodeModal" style="display:none;" onclick="if(event.target===this) closeBarcodeScannerModal()">
+    <div class="scanner-modal-card">
+      <div class="scanner-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px; color:#10b981;"><i class="fa-solid fa-camera"></i></span>
+          <div>
+            <h3 style="margin:0; font-size:15px; font-weight:800; color:white;">Scan Parcel Barcode / QR Code</h3>
+            <p style="margin:0; font-size:11px; color:#94a3b8;">JK Study Hub Logistics • In-App Camera Scanner</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBarcodeScannerModal()" class="scanner-close-btn">&times;</button>
+      </div>
+
+      <div class="scanner-viewfinder-wrap">
+        <video id="sellerScannerVideo" playsinline autoplay muted></video>
+        <canvas id="sellerScannerCanvas" style="display:none;"></canvas>
+
+        <div class="scanner-reticle">
+          <div class="reticle-corner top-left"></div>
+          <div class="reticle-corner top-right"></div>
+          <div class="reticle-corner bottom-left"></div>
+          <div class="reticle-corner bottom-right"></div>
+          <div class="scanner-laser-line"></div>
+        </div>
+
+        <div class="scanner-controls-overlay">
+          <button type="button" id="btnSellerToggleTorch" onclick="toggleSellerScannerTorch()" style="display:none;" title="Toggle Flashlight">
+            <i class="fa-solid fa-bolt"></i>
+          </button>
+          <button type="button" onclick="flipSellerScannerCamera()" title="Switch Camera">
+            <i class="fa-solid fa-camera-rotate"></i>
+          </button>
+        </div>
+
+        <div id="sellerScannerStatusBadge" class="scanner-status-badge">
+          <span class="live-pulse"></span> Align Barcode inside frame
+        </div>
+      </div>
+
+      <!-- Manual Order ID fallback / External barcode gun input -->
+      <div class="scanner-manual-wrap">
+        <input type="text" id="manualBarcodeScanInput" placeholder="Enter or scan Order ID (e.g. OD12345)..." onkeydown="if(event.key==='Enter') handleManualBarcodeLookup()">
+        <button type="button" onclick="handleManualBarcodeLookup()"><i class="fa-solid fa-magnifying-glass"></i> Lookup</button>
+      </div>
+
+      <!-- Live Scanned Parcel Result Card -->
+      <div id="sellerScannedResultCard" class="scanned-result-card" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       SELLER MOBILE DEDICATED BOTTOM NAVIGATION BAR
+       ========================================================= -->
+  <nav class="seller-mobile-bottom-nav" id="sellerMobileBottomNav" style="display: none;">
+    <button type="button" class="mobile-nav-tab active" id="mob-tab-orders" onclick="switchSellerView('orders')">
+      <i class="fa-solid fa-box-archive"></i>
+      <span>Orders</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" id="mob-tab-inventory" onclick="switchSellerView('inventory')">
+      <i class="fa-solid fa-boxes-stacked"></i>
+      <span>Stock</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" id="mob-tab-delivery" onclick="switchSellerView('delivery')">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+      <span>Rates</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" id="mob-tab-pricing" onclick="switchSellerView('pricing')">
+      <i class="fa-solid fa-tags"></i>
+      <span>Pricing</span>
+    </button>
+    <button type="button" class="mobile-nav-tab" id="mob-tab-menu" onclick="toggleSellerMobileSidebar()">
+      <i class="fa-solid fa-bars"></i>
+      <span>Menu</span>
+    </button>
+  </nav>
+
+  <!-- Mobile Drawer Backdrop -->
+  <div class="seller-mobile-drawer-backdrop" id="sellerMobileDrawerBackdrop" onclick="toggleSellerMobileSidebar(false)"></div>
+
+  <!-- Firebase Compatibility SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script>
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyA_fgnUKqpy15ku81BKKSa5b-wMuyeT9uw",
+        authDomain: "jk-study-hub-574c7.firebaseapp.com",
+        projectId: "jk-study-hub-574c7",
+        storageBucket: "jk-study-hub-574c7.firebasestorage.app",
+        messagingSenderId: "544447856590",
+        appId: "1:544447856590:web:9280ed66e744e6b8cfb59f"
+      });
+    }
+  </script>
+  <!-- jsQR Scanner Fallback Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <!-- Real-Time Visitor Analytics Tracker -->
+  <script src="analytics.js?v=1"></script>
+  <!-- External Script -->
+  <script src="ads-media.js?v=90.0"></script>
+  <script src="seller.js?v=90.3"></script>
+</body>
+</html>
