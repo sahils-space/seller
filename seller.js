@@ -864,6 +864,9 @@ function renderSellerOrdersTable() {
             <button type="button" class="btn-hub-secondary" style="padding: 5px 9px; font-size: 11.5px;" onclick="openSellerShippingLabelModal('${safeOrderId}')" title="Print JK Study Hub Thermal Label">
               <i class="fa-solid fa-print"></i> Label
             </button>
+            <button type="button" class="btn-hub-secondary" style="padding: 5px 9px; font-size: 11.5px; color: #1e40af; border-color: #bfdbfe; background: #eff6ff;" onclick="quickCopyOrderLabelImage('${safeOrderId}', this, event)" title="Copy Shipping Label as Image directly to clipboard">
+              <i class="fa-solid fa-copy"></i> Copy Image
+            </button>
             ${!statusLower.includes('cancel') ? `
               <button type="button" class="btn-hub-secondary" style="padding: 5px 8px; font-size: 11.5px; color: #dc2626; border-color: #fecaca; background: #fef2f2;" onclick="if(confirm('Are you sure you want to cancel order ${safeOrderId}?')) updateOrderStatusFromSeller('${safeOrderId}', 'Cancelled');" title="Cancel this Order">
                 <i class="fa-solid fa-xmark"></i> Cancel
@@ -1427,6 +1430,7 @@ function renderQrCodeIntoContainer(container, text, size = 70) {
 
   // Fallback to high-resolution QR service
   const img = document.createElement('img');
+  img.crossOrigin = 'anonymous';
   img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&margin=1`;
   img.alt = 'QR Tracking Code';
   img.style.width = size + 'px';
@@ -1436,23 +1440,8 @@ function renderQrCodeIntoContainer(container, text, size = 70) {
   container.appendChild(img);
 }
 
-function openSellerShippingLabelModal(orderId) {
-  activePrintingOrderId = orderId;
-  const orders = getSellerOrders();
-  const o = orders.find(ord => String(ord.orderId).trim().toUpperCase() === String(orderId).trim().toUpperCase()) || { 
-    orderId, 
-    product: 'Syllabus & Textbook Pack', 
-    amount: 199, 
-    name: 'Student Consignee',
-    phone: '9622605714',
-    address: 'Delivery Address, Pattan Hub, Kashmir 193121',
-    date: new Date().toLocaleDateString('en-IN')
-  };
-
-  const modal = document.getElementById('sellerShippingLabelModal');
-  const sheet = document.getElementById('sellerShippingLabelSheet');
-  if (!sheet) return;
-
+function renderShippingLabelCardHtml(o, isA4Quadrant = false) {
+  if (!o) return '';
   const customerName = (o.name && !o.name.match(/^[6789]\d{9}$/)) ? o.name : 'Valued Student';
   const customerPhone = o.phone || '9622605714';
   const customerAddress = o.address || 'Delivery Address, Pattan Hub, Dist. Baramulla, J&K';
@@ -1461,80 +1450,128 @@ function openSellerShippingLabelModal(orderId) {
   const pincode = pinMatch ? pinMatch[1] : '193121';
 
   const isCod = isCodOrder(o);
-  const barcodeSvg = generateCode128Svg(o.orderId, 55, 2);
+  const barcodeSvg = isA4Quadrant ? generateCode128Svg(o.orderId, 36, 1.6) : generateCode128Svg(o.orderId, 50, 2);
   const qrUrl = `https://jkstudyhub.online/account.html#orders?id=${encodeURIComponent(o.orderId)}`;
   const awbNumber = 'JKSH' + (String(o.orderId).replace(/\D/g,'').slice(-6) || '193121');
   const orderDate = o.date || new Date().toLocaleDateString('en-IN');
 
-  sheet.innerHTML = `
-    <div class="seller-label-dual-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; align-items: stretch;">
-      
-      <!-- ========================================================
-           LEFT: PERSONALIZED CUSTOMER THANK YOU & ₹20 REWARD CARD
-           ======================================================== -->
-      <div id="printTargetCard" class="seller-custom-thank-card" style="background: linear-gradient(145deg, #07111e 0%, #0e233d 100%); border: 2.5px solid #d4af37; border-radius: 12px; padding: 22px; color: #fff; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 6px 20px rgba(0,0,0,0.18); min-height: 520px; box-sizing: border-box;">
-        
-        <div style="position: absolute; inset: 7px; border: 1px solid rgba(212, 175, 55, 0.45); border-radius: 8px; pointer-events: none;"></div>
-
-        <!-- Card Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 9px;">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%); color: #0b192c; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem; font-family: 'Cinzel', serif;">JK</div>
+  if (isA4Quadrant) {
+    // Compact Quadrant Label formatted for A4 2x2 Grid (96mm x 138mm)
+    return `
+      <div class="a4-quadrant-label">
+        <!-- Top Logistics Header -->
+        <div style="border-bottom: 2px solid #000; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="font-size: 15px;">📦</span>
             <div>
-              <div style="font-size: 14px; font-weight: 800; letter-spacing: 0.5px; color: #f8fafc;">JK STUDY HUB</div>
-              <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #d4af37; font-weight: 700;">Excellence in Learning • Kashmir</div>
+              <div style="font-size: 10.5px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.1;">JK STUDY HUB LOGISTICS</div>
+              <div style="font-size: 7.5px; font-weight: 700; color: #333; text-transform: uppercase;">Express Surface &amp; Parcel Dispatch</div>
             </div>
           </div>
-          <div style="background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%); color: #07111e; font-size: 9px; font-weight: 900; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(212,175,55,0.4);">
-            Verified Student
+          <div style="text-align: right;">
+            <div style="font-size: 8.5px; font-weight: 900; border: 1.5px solid #000; padding: 1px 5px; display: inline-block;">ROUTE: KMR-193</div>
+            <div style="font-size: 8px; font-weight: 600; margin-top: 1px;">DATE: ${orderDate}</div>
           </div>
         </div>
 
-        <!-- Greeting & Message -->
-        <div style="text-align: center; margin: 10px 0 14px; position: relative; z-index: 2;">
-          <div style="font-family: 'Cinzel', serif; font-size: 19px; font-weight: 800; color: #fbf5b7; letter-spacing: 0.5px; margin-bottom: 6px;">
-            BEST OF LUCK FOR EXAMS!
+        <!-- Primary Barcode Section -->
+        <div style="border-bottom: 2px solid #000; padding: 4px 2px; text-align: center; background: #fff;">
+          <div style="display: flex; justify-content: center; margin-bottom: 2px;">
+            ${barcodeSvg}
           </div>
-          <div style="font-size: 11.5px; color: #cbd5e1; line-height: 1.5; max-width: 360px; margin: 0 auto;">
-            Dear <strong style="color:#fff;">${customerName}</strong>, thank you for choosing JK Study Hub! We are proud to support your academic journey with authentic books &amp; study supplies at strictly less than bookshop rates &amp; less than MRP.
-          </div>
-        </div>
-
-        <!-- Order & One-Time ₹20 Coupon Voucher Box -->
-        <div style="background: rgba(212, 175, 55, 0.1); border: 2px dashed #d4af37; border-radius: 10px; padding: 14px; margin-bottom: 14px; position: relative; z-index: 2; text-align: center;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(212,175,55,0.4); padding-bottom: 6px; margin-bottom: 8px;">
-            <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">LOCKED TO YOUR ORDER:</span>
-            <span style="font-family: monospace; font-size: 13.5px; font-weight: 900; color: #fef08a; letter-spacing: 1px;">#${o.orderId}</span>
-          </div>
-
-          <div style="font-size: 10.5px; font-weight: 800; color: #e2e8f0; text-transform: uppercase; letter-spacing: 1px;">
-            🎁 EXCLUSIVE ONE-TIME REWARD
-          </div>
-          <div style="font-size: 22px; font-weight: 900; color: #fef08a; margin: 3px 0; letter-spacing: 1px;">
-            ₹20 OFF NEXT ORDER
-          </div>
-          <div style="display: inline-block; background: #07111e; border: 1.5px solid #d4af37; padding: 4px 14px; border-radius: 6px; margin: 6px 0;">
-            <span style="font-size: 10px; color: #cbd5e1; font-weight: 600;">COUPON CODE: </span>
-            <span style="font-family: monospace; font-size: 14px; font-weight: 900; color: #fde047; letter-spacing: 1.5px;">STUDENT20</span>
-          </div>
-
-          <div style="font-size: 10px; color: #94a3b8; line-height: 1.4; margin-top: 6px;">
-            🔒 <strong>How to Redeem:</strong> On your next order, tick <em>"Have you ordered before?"</em> at checkout and enter your Order ID <strong>${o.orderId}</strong> + Code <strong>STUDENT20</strong> to get ₹20 off. Can only be redeemed once!
+          <div style="font-family: monospace; font-size: 12px; font-weight: 900; letter-spacing: 1.5px; line-height: 1;">* ${o.orderId} *</div>
+          <div style="display: flex; justify-content: space-between; font-size: 8px; font-weight: 700; margin-top: 2px; padding: 0 4px; color: #222;">
+            <span>AWB: ${awbNumber}</span>
+            <span>HUB: BARAMULLA / PATTAN</span>
           </div>
         </div>
 
-        <!-- Footer -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(212, 175, 55, 0.3); padding-top: 10px; font-size: 10.5px; color: #94a3b8; position: relative; z-index: 2;">
-          <div><i class="fa-brands fa-whatsapp" style="color: #22c55e;"></i> Helpline: <strong style="color: #fff;">+91 9622605714</strong></div>
-          <div style="color: #38bdf8; font-weight: 700;"><i class="fa-solid fa-truck-fast"></i> Free Delivery Pattan</div>
+        <!-- Payment Status Banner -->
+        <div style="border-bottom: 2px solid #000; padding: 4px 6px; text-align: center; ${isCod ? 'background: #000; color: #fff;' : 'background: #f1f5f9; color: #000;'}">
+          ${isCod ? `
+            <div style="font-size: 11px; font-weight: 900; letter-spacing: 0.5px;">CASH ON DELIVERY (COD)</div>
+            <div style="font-size: 12px; font-weight: 900; margin-top: 1px;">COLLECT CASH: ₹${o.amount || 0}</div>
+          ` : `
+            <div style="font-size: 10.5px; font-weight: 900; letter-spacing: 0.5px;">PREPAID — DO NOT COLLECT CASH</div>
+            <div style="font-size: 9.5px; font-weight: 700; margin-top: 1px;">AMOUNT PAID: ₹${o.amount || 0} • VERIFIED ONLINE</div>
+          `}
         </div>
 
+        <!-- Addresses (SHIP TO & SHIP FROM) -->
+        <div style="display: grid; grid-template-columns: 1.3fr 1fr; border-bottom: 2px solid #000; flex: 1; align-items: stretch;">
+          <div style="padding: 5px 6px; border-right: 1.5px solid #000; background: #fff;">
+            <div style="font-size: 7.5px; font-weight: 900; text-transform: uppercase; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 1px; margin-bottom: 2px;">DELIVER TO (CONSIGNEE):</div>
+            <div style="font-size: 11px; font-weight: 900; color: #000; line-height: 1.2;">${customerName}</div>
+            <div style="font-size: 9.5px; font-weight: 800; color: #000; margin-top: 2px;">TEL: +91 ${customerPhone}</div>
+            <div style="font-size: 8.5px; font-weight: 600; color: #111; line-height: 1.25; margin-top: 2px; word-break: break-word;">${customerAddress}</div>
+            <div style="margin-top: 4px; padding-top: 2px; border-top: 1px dashed #000; display: flex; align-items: baseline; gap: 4px;">
+              <span style="font-size: 8px; font-weight: 900;">PIN:</span>
+              <span style="font-size: 14px; font-weight: 900; letter-spacing: 0.8px;">${pincode}</span>
+            </div>
+          </div>
+          <div style="padding: 5px 6px; background: #fff;">
+            <div style="font-size: 7.5px; font-weight: 900; text-transform: uppercase; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 1px; margin-bottom: 2px;">SHIPPER (RETURN TO):</div>
+            <div style="font-size: 9px; font-weight: 900; color: #000; line-height: 1.2;">JK STUDY HUB</div>
+            <div style="font-size: 8px; font-weight: 600; color: #333; margin-top: 2px; line-height: 1.2;">
+              Main Market, Pattan<br>
+              Dist. Baramulla, J&amp;K
+            </div>
+            <div style="font-size: 8.5px; font-weight: 800; margin-top: 2px;">+91 9622605714</div>
+            <div style="margin-top: 4px; font-size: 7.5px; font-weight: 700; border: 1px solid #000; padding: 1px 3px; display: inline-block;">
+              ORIGIN: 193121
+            </div>
+          </div>
+        </div>
+
+        <!-- Contents -->
+        <div style="border-bottom: 1.5px solid #000; padding: 3px 6px; font-size: 8.5px; font-weight: 700; display: flex; justify-content: space-between; background: #fff;">
+          <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;">${o.product || 'Study Material / Textbook'}</span>
+          <span>QTY: 1</span>
+          <span>₹${o.amount || 0}</span>
+        </div>
+
+        <!-- Tracking QR & Seal -->
+        <div style="padding: 4px 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: #fff;">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 44px; height: 44px; border: 1px solid #000; padding: 1px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrUrl)}&margin=1" style="width: 100%; height: 100%; object-fit: contain;" alt="QR" crossOrigin="anonymous">
+            </div>
+            <div style="font-size: 7.5px; font-weight: 700; color: #333; line-height: 1.2; max-width: 120px;">
+              SCAN FOR LIVE DISPATCH STATUS &amp; AUTHENTICITY
+            </div>
+          </div>
+          <div style="text-align: center; border: 1.2px dashed #000; padding: 2px 5px; border-radius: 4px; min-width: 75px;">
+            <div style="font-size: 7px; font-weight: 900;">JK STUDY HUB</div>
+            <div style="font-size: 8px; font-weight: 900; color: #000; margin: 1px 0;">VERIFIED DISPATCH</div>
+            <div style="font-size: 6.5px; font-weight: 700; color: #555;">AUTH SIGNATORY</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Single Standard View for modal preview (#printTargetLabel)
+  return `
+    <div class="label-column-wrapper" style="display: flex; flex-direction: column; gap: 10px; max-width: 500px; margin: 0 auto;">
+      <!-- Label Quick Action Toolbar -->
+      <div class="label-action-toolbar" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border-radius: 8px; border: 1.5px solid #0f172a; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+        <span style="font-size: 12px; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-barcode"></i> Logistics Shipping Label
+        </span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button type="button" class="btn-hub-secondary" style="padding: 5px 12px; font-size: 11.5px; font-weight: 800; color: white; background: #2563eb; border-color: #2563eb;" onclick="copySellerShippingImage('label', this)" title="Copy Shipping Label as PNG Image to clipboard">
+            <i class="fa-solid fa-copy"></i> Copy Image
+          </button>
+          <button type="button" class="btn-hub-secondary" style="padding: 5px 9px; font-size: 11.5px; font-weight: 700;" onclick="downloadSellerShippingImage('label', this)" title="Download Label as PNG">
+            <i class="fa-solid fa-download"></i>
+          </button>
+          <button type="button" class="btn-hub-secondary" style="padding: 5px 9px; font-size: 11.5px; font-weight: 700;" onclick="printSellerShippingLabel('label')" title="Print Label Only">
+            <i class="fa-solid fa-print"></i>
+          </button>
+        </div>
       </div>
 
-      <!-- ========================================================
-           RIGHT: LOGISTICS SURFACE SHIPPING LABEL (BARCODED)
-           ======================================================== -->
-      <div id="printTargetLabel" class="shipping-label-sheet" style="border: 2.5px solid #000; background: #fff; color: #000; font-family: 'Plus Jakarta Sans', Arial, sans-serif; text-align: left; line-height: 1.35; border-radius: 4px; box-sizing: border-box;">
+      <div id="printTargetLabel" class="shipping-label-sheet" style="border: 2.5px solid #000; background: #fff; color: #000; font-family: 'Plus Jakarta Sans', Arial, sans-serif; text-align: left; line-height: 1.35; border-radius: 4px; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
         <!-- Top Bar: Logistics Header -->
         <div style="border-bottom: 2px solid #000; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; background: #fff;">
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -1624,7 +1661,8 @@ function openSellerShippingLabelModal(orderId) {
         <!-- Footer with QR Code and Dispatch Stamp -->
         <div style="padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div id="sellerShippingLabelQrWrap" style="width: 65px; height: 65px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid #000; padding: 2px;">
+            <div style="width: 65px; height: 65px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid #000; padding: 2px; background: #fff;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}&margin=1" style="width: 100%; height: 100%; object-fit: contain;" alt="QR" crossOrigin="anonymous">
             </div>
             <div>
               <div style="font-size: 9px; font-weight: 900; text-transform: uppercase;">SCAN FOR REAL-TIME TRACKING</div>
@@ -1640,40 +1678,37 @@ function openSellerShippingLabelModal(orderId) {
           </div>
         </div>
       </div>
-
     </div>
   `;
+}
 
-  setTimeout(() => {
-    const qrContainer = document.getElementById('sellerShippingLabelQrWrap');
-    if (qrContainer) {
-      renderQrCodeIntoContainer(qrContainer, qrUrl, 64);
-    }
-  }, 40);
+function openSellerShippingLabelModal(orderId) {
+  activePrintingOrderId = orderId;
+  const orders = getSellerOrders();
+  const o = orders.find(ord => String(ord.orderId).trim().toUpperCase() === String(orderId).trim().toUpperCase()) || { 
+    orderId, 
+    product: 'Syllabus & Textbook Pack', 
+    amount: 199, 
+    name: 'Student Consignee',
+    phone: '9622605714',
+    address: 'Delivery Address, Pattan Hub, Kashmir 193121',
+    date: new Date().toLocaleDateString('en-IN')
+  };
+
+  const modal = document.getElementById('sellerShippingLabelModal');
+  const sheet = document.getElementById('sellerShippingLabelSheet');
+  if (!sheet) return;
+
+  sheet.innerHTML = renderShippingLabelCardHtml(o, false);
 
   if (modal) modal.classList.add('open');
 }
 
-function printSellerShippingLabel(targetType = 'all') {
-  let contentHtml = '';
-  let docTitle = `Dispatch Package - ${activePrintingOrderId}`;
-
-  if (targetType === 'card') {
-    const cardEl = document.getElementById('printTargetCard');
-    if (!cardEl) return;
-    contentHtml = `<div style="max-width: 480px; margin: 20px auto;">${cardEl.outerHTML}</div>`;
-    docTitle = `Student Reward Card - ${activePrintingOrderId}`;
-  } else if (targetType === 'label') {
-    const labelEl = document.getElementById('printTargetLabel');
-    if (!labelEl) return;
-    contentHtml = `<div style="max-width: 420px; margin: 20px auto;">${labelEl.outerHTML}</div>`;
-    docTitle = `Shipping Label - ${activePrintingOrderId}`;
-  } else {
-    const dualGrid = document.querySelector('.seller-label-dual-container');
-    if (!dualGrid) return;
-    contentHtml = `<div style="max-width: 900px; margin: 10px auto;">${dualGrid.outerHTML}</div>`;
-    docTitle = `Label & Student Card - ${activePrintingOrderId}`;
-  }
+function printSellerShippingLabel(targetType = 'label') {
+  const labelEl = document.getElementById('printTargetLabel');
+  if (!labelEl) return;
+  const contentHtml = `<div style="max-width: 420px; margin: 20px auto;">${labelEl.outerHTML}</div>`;
+  const docTitle = `Shipping Label - ${activePrintingOrderId}`;
 
   const printWindow = window.open('', '_blank', 'width=950,height=900');
   if (!printWindow) {
@@ -1686,17 +1721,14 @@ function printSellerShippingLabel(targetType = 'all') {
     <head>
       <title>${docTitle}</title>
       <meta charset="utf-8">
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap" rel="stylesheet">
       <style>
         body { margin: 0; padding: 15px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .seller-label-dual-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
-        .seller-custom-thank-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .shipping-label-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         @media print {
           body { padding: 0; }
-          @page { size: ${targetType === 'all' ? 'A4 landscape' : 'auto'}; margin: 6mm; }
-          .seller-label-dual-container { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6mm !important; }
+          @page { size: auto; margin: 6mm; }
+          .label-action-toolbar { display: none !important; }
         }
       </style>
     </head>
@@ -1712,17 +1744,573 @@ function printSellerShippingLabel(targetType = 'all') {
   }, 450);
 }
 
+// =========================================================
+// 6.5. HIGH-RES IMAGE EXPORT & CLIPBOARD COPY ENGINE
+// =========================================================
+
+function showSellerToast(message, type = 'success') {
+  let toast = document.getElementById('sellerGlobalToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'sellerGlobalToast';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#0f172a;color:#ffffff;padding:12px 20px;border-radius:10px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.3),0 8px 10px -6px rgba(0,0,0,0.3);display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700;z-index:999999;transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),opacity 0.25s ease;opacity:0;pointer-events:none;max-width:90vw;';
+    document.body.appendChild(toast);
+  }
+  const icon = type === 'error' 
+    ? '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444;font-size:16px;"></i>' 
+    : '<i class="fa-solid fa-circle-check" style="color:#22c55e;font-size:16px;"></i>';
+  toast.innerHTML = `${icon}<span>${message}</span>`;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(100px)';
+  }, 3200);
+}
+
+if (typeof window.showToast !== 'function') {
+  window.showToast = showSellerToast;
+}
+
+function ensureHtml2CanvasLoaded() {
+  return new Promise((resolve, reject) => {
+    if (typeof window.html2canvas === 'function') {
+      return resolve(window.html2canvas);
+    }
+    const existing = document.querySelector('script[src*="html2canvas"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.html2canvas));
+      existing.addEventListener('error', () => reject(new Error('Failed to load html2canvas library')));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = () => resolve(window.html2canvas);
+    script.onerror = () => reject(new Error('Failed to load html2canvas library'));
+    document.head.appendChild(script);
+  });
+}
+
+async function renderShippingElementToCanvas(targetType = 'label') {
+  await ensureHtml2CanvasLoaded();
+  let targetEl;
+  if (targetType === 'card') {
+    targetEl = document.getElementById('printTargetCard');
+  } else if (targetType === 'all') {
+    targetEl = document.getElementById('sellerShippingLabelSheet') || document.querySelector('.seller-label-dual-container');
+  } else {
+    targetEl = document.getElementById('printTargetLabel');
+  }
+
+  if (!targetEl) {
+    throw new Error('Target element not found in DOM.');
+  }
+
+  return await window.html2canvas(targetEl, {
+    scale: 2.5,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
+    backgroundColor: targetType === 'card' ? '#07111e' : '#ffffff',
+    ignoreElements: (el) => {
+      return el && el.classList && el.classList.contains('label-action-toolbar');
+    }
+  });
+}
+
+async function copySellerShippingImage(targetType = 'label', buttonEl) {
+  const origHtml = buttonEl ? buttonEl.innerHTML : null;
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Copying...';
+  }
+
+  const labelName = targetType === 'card' ? 'Reward Card' : (targetType === 'all' ? 'Label & Card' : 'Shipping Label');
+  const safeId = (typeof activePrintingOrderId !== 'undefined' && activePrintingOrderId) ? activePrintingOrderId : 'ORDER';
+
+  try {
+    const canvas = await renderShippingElementToCanvas(targetType);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1.0));
+    if (!blob) throw new Error('Could not generate image blob from canvas.');
+
+    let copiedToClipboard = false;
+    if (navigator.clipboard && window.ClipboardItem && typeof navigator.clipboard.write === 'function') {
+      try {
+        const item = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([item]);
+        copiedToClipboard = true;
+      } catch (clipErr) {
+        console.warn('Direct clipboard write permission denied/restricted:', clipErr);
+      }
+    }
+
+    if (copiedToClipboard) {
+      showSellerToast(`📋 ${labelName} copied as image! Ready to paste into WhatsApp / chat.`);
+      if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    } else {
+      const link = document.createElement('a');
+      link.download = `JK_${labelName.replace(/\s+/g, '_')}_${safeId}.png`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+      showSellerToast(`📥 ${labelName} saved as PNG! (Clipboard permission unavailable on this device)`);
+      if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-download"></i> Saved!';
+    }
+  } catch (err) {
+    console.error('Error copying shipping image:', err);
+    showSellerToast(`Failed to copy image: ${err.message || 'Unknown error'}`, 'error');
+    if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+  } finally {
+    if (buttonEl && origHtml) {
+      setTimeout(() => {
+        buttonEl.innerHTML = origHtml;
+        buttonEl.disabled = false;
+      }, 2200);
+    }
+  }
+}
+
+async function downloadSellerShippingImage(targetType = 'label', buttonEl) {
+  const origHtml = buttonEl ? buttonEl.innerHTML : null;
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  }
+
+  const labelName = targetType === 'card' ? 'Reward_Card' : (targetType === 'all' ? 'Label_And_Card' : 'Shipping_Label');
+  const safeId = (typeof activePrintingOrderId !== 'undefined' && activePrintingOrderId) ? activePrintingOrderId : 'ORDER';
+
+  try {
+    const canvas = await renderShippingElementToCanvas(targetType);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1.0));
+    if (!blob) throw new Error('Could not generate image blob from canvas.');
+
+    const link = document.createElement('a');
+    link.download = `JK_${labelName}_${safeId}.png`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+
+    showSellerToast(`📥 ${labelName.replace(/_/g, ' ')} downloaded as high-res PNG!`);
+    if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+  } catch (err) {
+    console.error('Error downloading shipping image:', err);
+    showSellerToast(`Failed to download image: ${err.message || 'Unknown error'}`, 'error');
+    if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+  } finally {
+    if (buttonEl && origHtml) {
+      setTimeout(() => {
+        buttonEl.innerHTML = origHtml;
+        buttonEl.disabled = false;
+      }, 2200);
+    }
+  }
+}
+
+async function quickCopyOrderLabelImage(orderId, buttonEl, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const origHtml = buttonEl ? buttonEl.innerHTML : null;
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Copying...';
+  }
+
+  try {
+    openSellerShippingLabelModal(orderId);
+    await new Promise(r => setTimeout(r, 120));
+    await copySellerShippingImage('label', buttonEl);
+  } catch (err) {
+    console.error('Quick copy error:', err);
+    showSellerToast(`Failed to copy label image: ${err.message || err}`, 'error');
+    if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed';
+  } finally {
+    if (buttonEl && origHtml) {
+      setTimeout(() => {
+        buttonEl.innerHTML = origHtml;
+        buttonEl.disabled = false;
+      }, 2200);
+    }
+  }
+}
+
 function closeSellerModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.remove('open');
 }
 
-function openBulkLabelModal() {
-  const orders = getSellerOrders();
-  if (orders.length > 0) {
-    openSellerShippingLabelModal(orders[0].orderId);
+let currentBulkA4Filter = 'pending';
+let currentBulkA4Orders = [];
+
+function switchBulkA4Filter(filterType) {
+  currentBulkA4Filter = filterType;
+  const pendingBtn = document.getElementById('bulkFilterPendingBtn');
+  const allBtn = document.getElementById('bulkFilterAllBtn');
+  if (filterType === 'pending') {
+    if (pendingBtn) { pendingBtn.style.background = '#2563eb'; pendingBtn.style.color = '#fff'; }
+    if (allBtn) { allBtn.style.background = '#fff'; allBtn.style.color = '#475569'; }
   } else {
-    alert("No active orders found to print labels.");
+    if (pendingBtn) { pendingBtn.style.background = '#fff'; pendingBtn.style.color = '#475569'; }
+    if (allBtn) { allBtn.style.background = '#2563eb'; allBtn.style.color = '#fff'; }
+  }
+  renderBulkA4Sheets();
+}
+
+function openBulkLabelModal(filterType = 'pending') {
+  currentBulkA4Filter = filterType || 'pending';
+  const orders = getSellerOrders();
+
+  let pendingList = [];
+  let allList = [];
+
+  orders.forEach(o => {
+    if (!o || !o.orderId) return;
+    const s = String(o.status || 'Confirmed').toLowerCase();
+    if (s.includes('cancel')) return;
+    allList.push(o);
+    if (s.includes('confirm') || s.includes('process') || s.includes('pending') || !o.status) {
+      pendingList.push(o);
+    }
+  });
+
+  // If user selected pending but pending has 0 orders while there are other active orders, auto-fallback to all
+  if (currentBulkA4Filter === 'pending' && pendingList.length === 0 && allList.length > 0) {
+    currentBulkA4Filter = 'all';
+  }
+
+  const elPending = document.getElementById('bulkCountPending');
+  const elAll = document.getElementById('bulkCountAll');
+  if (elPending) elPending.innerText = pendingList.length;
+  if (elAll) elAll.innerText = allList.length;
+
+  switchBulkA4Filter(currentBulkA4Filter);
+
+  const modal = document.getElementById('sellerBulkA4Modal');
+  if (modal) modal.classList.add('open');
+}
+
+function renderBulkA4Sheets() {
+  const container = document.getElementById('bulkA4SheetsContainer');
+  if (!container) return;
+
+  const orders = getSellerOrders();
+  let targetOrders = [];
+
+  orders.forEach(o => {
+    if (!o || !o.orderId) return;
+    const s = String(o.status || 'Confirmed').toLowerCase();
+    if (s.includes('cancel')) return;
+    if (currentBulkA4Filter === 'pending') {
+      if (s.includes('confirm') || s.includes('process') || s.includes('pending') || !o.status) {
+        targetOrders.push(o);
+      }
+    } else {
+      targetOrders.push(o);
+    }
+  });
+
+  currentBulkA4Orders = targetOrders;
+
+  const allActive = orders.filter(o => !String(o.status || '').toLowerCase().includes('cancel'));
+  const pendingActive = allActive.filter(o => {
+    const s = String(o.status || 'Confirmed').toLowerCase();
+    return s.includes('confirm') || s.includes('process') || s.includes('pending') || !o.status;
+  });
+
+  const elPending = document.getElementById('bulkCountPending');
+  const elAll = document.getElementById('bulkCountAll');
+  if (elPending) elPending.innerText = pendingActive.length;
+  if (elAll) elAll.innerText = allActive.length;
+
+  if (targetOrders.length === 0) {
+    container.innerHTML = `
+      <div style="background: white; padding: 40px 20px; border-radius: 12px; text-align: center; max-width: 520px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin: 30px auto;">
+        <div style="font-size: 42px; margin-bottom: 12px;">📭</div>
+        <h4 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 6px;">No ${currentBulkA4Filter === 'pending' ? 'Pending' : 'Active'} Orders Available</h4>
+        <p style="font-size: 12.5px; color: #64748b; margin: 0 0 16px; line-height: 1.4;">
+          ${currentBulkA4Filter === 'pending' 
+            ? 'There are no pending orders right now. Switch to view all active orders to generate A4 sheets.' 
+            : 'No customer orders found in the database.'}
+        </p>
+        ${currentBulkA4Filter === 'pending' ? `
+          <button type="button" class="btn-hub-primary" onclick="switchBulkA4Filter('all')" style="background: #2563eb; font-weight: 800; font-size: 12.5px; padding: 8px 16px;">
+            <i class="fa-solid fa-list-check"></i> View All Active Orders (${allActive.length})
+          </button>
+        ` : ''}
+      </div>
+    `;
+    return;
+  }
+
+  // Exactly 4 labels per A4 page!
+  const totalSheets = Math.ceil(targetOrders.length / 4);
+  const subtitle = document.getElementById('bulkA4ModalSubtitle');
+  if (subtitle) {
+    subtitle.innerHTML = `<strong>${targetOrders.length} Order${targetOrders.length === 1 ? '' : 's'}</strong> formatted across <strong>${totalSheets} A4 Sheet${totalSheets === 1 ? '' : 's'}</strong> &bull; Exactly 4 labels per page with cut guides`;
+  }
+
+  let html = '';
+  for (let pageIdx = 0; pageIdx < totalSheets; pageIdx++) {
+    const pageOrders = targetOrders.slice(pageIdx * 4, pageIdx * 4 + 4);
+    const sheetNum = pageIdx + 1;
+
+    html += `
+      <div class="a4-sheet-preview-card" id="bulkSheetPreview_${sheetNum}">
+        <div class="a4-sheet-preview-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="a4-sheet-badge">A4 SHEET ${sheetNum} OF ${totalSheets}</span>
+            <span style="font-size: 12px; font-weight: 700; color: #475569;">
+              ${pageOrders.length} / 4 Shipping Labels
+            </span>
+          </div>
+          <div style="font-size: 11px; font-weight: 800; color: #2563eb; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-scissors"></i> Cut along center dotted lines
+          </div>
+        </div>
+
+        <div class="a4-grid-2x2" style="position: relative;">
+          <!-- Horizontal Center Cut Guide -->
+          <div style="position: absolute; top: 50%; left: 0; right: 0; border-top: 1.5px dashed #94a3b8; pointer-events: none; z-index: 10; display: flex; justify-content: space-between; align-items: center; transform: translateY(-50%);">
+            <span style="background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px dashed #94a3b8; margin-left: 4px;">✂ CUT HORIZONTALLY</span>
+            <span style="background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px dashed #94a3b8; margin-right: 4px;">✂ CUT HORIZONTALLY</span>
+          </div>
+          <!-- Vertical Center Cut Guide -->
+          <div style="position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1.5px dashed #94a3b8; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; align-items: center; transform: translateX(-50%);">
+            <span style="background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px dashed #94a3b8; margin-top: 4px;">✂ CUT VERTICALLY</span>
+            <span style="background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px dashed #94a3b8; margin-bottom: 4px;">✂ CUT VERTICALLY</span>
+          </div>
+
+          ${pageOrders.map((ord, idx) => `
+            <div class="a4-quadrant-wrapper" style="position: relative;">
+              <div style="position: absolute; top: 4px; right: 6px; font-size: 8.5px; font-weight: 900; background: #0f172a; color: #fff; padding: 1px 5px; border-radius: 3px; z-index: 5;">
+                #${pageIdx * 4 + idx + 1}
+              </div>
+              ${renderShippingLabelCardHtml(ord, true)}
+            </div>
+          `).join('')}
+
+          ${Array.from({ length: 4 - pageOrders.length }).map(() => `
+            <div class="a4-empty-quadrant">
+              <i class="fa-solid fa-scissors" style="font-size: 26px; margin-bottom: 8px; color: #cbd5e1;"></i>
+              <div style="font-size: 12px; font-weight: 800; color: #94a3b8;">BLANK LABEL QUADRANT</div>
+              <div style="font-size: 10px; margin-top: 4px; color: #cbd5e1;">Space reserved on A4 Sheet</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function printBulkA4LabelsWindow() {
+  const targetOrders = (currentBulkA4Orders && currentBulkA4Orders.length > 0) 
+    ? currentBulkA4Orders 
+    : getSellerOrders().filter(o => !String(o.status || '').toLowerCase().includes('cancel'));
+
+  if (!targetOrders || targetOrders.length === 0) {
+    alert("No orders available to print.");
+    return;
+  }
+
+  const totalSheets = Math.ceil(targetOrders.length / 4);
+
+  let pagesHtml = '';
+  for (let pageIdx = 0; pageIdx < totalSheets; pageIdx++) {
+    const pageOrders = targetOrders.slice(pageIdx * 4, pageIdx * 4 + 4);
+    
+    pagesHtml += `
+      <div class="a4-print-page">
+        <div class="a4-print-grid">
+          <!-- Horizontal Scissor Cut Line -->
+          <div class="a4-print-cut-h"></div>
+          <!-- Vertical Scissor Cut Line -->
+          <div class="a4-print-cut-v"></div>
+
+          ${pageOrders.map(ord => renderShippingLabelCardHtml(ord, true)).join('')}
+          ${Array.from({ length: 4 - pageOrders.length }).map(() => `
+            <div class="a4-print-empty-slot">
+              <span style="font-size: 16px; margin-bottom: 4px;">✂</span>
+              <span>BLANK LABEL QUADRANT</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  const printWindow = window.open('', '_blank', 'width=950,height=950');
+  if (!printWindow) {
+    alert("Popup blocked! Please allow popups for this site to print A4 labels.");
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>JK Study Hub - Dispatch Labels (A4 4-Up Sheets)</title>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+      <style>
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        @page {
+          size: A4 portrait;
+          margin: 6mm 6mm;
+        }
+        body {
+          font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+          background: #fff;
+          color: #000;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .a4-print-page {
+          width: 198mm;
+          height: 284mm;
+          margin: 0 auto;
+          page-break-after: always;
+          break-after: page;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          position: relative;
+        }
+        .a4-print-page:last-child {
+          page-break-after: auto;
+          break-after: auto;
+        }
+        .a4-print-grid {
+          width: 198mm;
+          height: 284mm;
+          display: grid;
+          grid-template-columns: 96mm 96mm;
+          grid-template-rows: 138mm 138mm;
+          gap: 6mm;
+          justify-content: center;
+          align-content: center;
+          box-sizing: border-box;
+          position: relative;
+        }
+        .a4-print-cut-h {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          border-top: 1px dashed #aaa;
+          pointer-events: none;
+          transform: translateY(-50%);
+        }
+        .a4-print-cut-v {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          border-left: 1px dashed #aaa;
+          pointer-events: none;
+          transform: translateX(-50%);
+        }
+        .a4-quadrant-label {
+          width: 96mm;
+          height: 138mm;
+          border: 2px solid #000;
+          border-radius: 4px;
+          padding: 7px 9px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          background: #fff;
+          color: #000;
+          box-sizing: border-box;
+          break-inside: avoid;
+          page-break-inside: avoid;
+          overflow: hidden;
+        }
+        .a4-print-empty-slot {
+          width: 96mm;
+          height: 138mm;
+          border: 1.5px dashed #aaa;
+          border-radius: 4px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: #777;
+          font-size: 10px;
+          font-weight: 700;
+          box-sizing: border-box;
+          break-inside: avoid;
+        }
+      </style>
+    </head>
+    <body>
+      ${pagesHtml}
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+  }, 450);
+}
+
+async function downloadAllBulkA4Images(buttonEl) {
+  const origHtml = buttonEl ? buttonEl.innerHTML : null;
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving PNGs...';
+  }
+
+  try {
+    await ensureHtml2CanvasLoaded();
+    const sheets = document.querySelectorAll('.a4-sheet-preview-card');
+    if (!sheets || sheets.length === 0) {
+      showSellerToast('No A4 sheets available to save.', 'error');
+      return;
+    }
+
+    for (let i = 0; i < sheets.length; i++) {
+      const sheet = sheets[i];
+      const canvas = await window.html2canvas(sheet, {
+        scale: 2.0,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 1.0));
+      if (blob) {
+        const link = document.createElement('a');
+        link.download = `JK_Dispatch_A4_Sheet_${i + 1}.png`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+      }
+    }
+    showSellerToast(`📥 Saved ${sheets.length} A4 Sheet${sheets.length === 1 ? '' : 's'} as high-res PNG!`);
+    if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+  } catch (err) {
+    console.error('Error saving A4 sheets:', err);
+    showSellerToast(`Failed to save sheet images: ${err.message || err}`, 'error');
+    if (buttonEl) buttonEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
+  } finally {
+    if (buttonEl && origHtml) {
+      setTimeout(() => {
+        buttonEl.innerHTML = origHtml;
+        buttonEl.disabled = false;
+      }, 2200);
+    }
   }
 }
 
@@ -2018,10 +2606,13 @@ function renderScannedOrderCard(order) {
         </div>
       </div>
 
-      <!-- Action Buttons: Print Label, WhatsApp, Next Scan -->
+      <!-- Action Buttons: Print Label, Copy Image, WhatsApp, Next Scan -->
       <div style="display: flex; gap: 6px; flex-wrap: wrap;">
         <button type="button" onclick="openSellerShippingLabelModal('${order.orderId}')" class="btn-hub-secondary" style="flex: 1; font-size: 11.5px; justify-content: center; padding: 8px;">
           <i class="fa-solid fa-print"></i> Thermal Label
+        </button>
+        <button type="button" onclick="quickCopyOrderLabelImage('${order.orderId}', this, event)" class="btn-hub-secondary" style="flex: 1; font-size: 11.5px; justify-content: center; padding: 8px; color: #1e40af; border-color: #bfdbfe; background: #eff6ff;" title="Copy Label as Image directly to clipboard">
+          <i class="fa-solid fa-copy"></i> Copy Image
         </button>
         ${customerPhone ? `
           <a href="https://wa.me/91${String(customerPhone).replace(/\D/g,'').slice(-10)}?text=${encodeURIComponent('Hi ' + customerName + '! Your order ' + order.orderId + ' from JK Study Hub is ' + (order.status || 'being processed') + '.')}" target="_blank" rel="noopener" class="btn-hub-secondary" style="flex: 1; font-size: 11.5px; justify-content: center; padding: 8px; color: #16a34a; text-decoration: none;">
